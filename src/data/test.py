@@ -8,16 +8,16 @@ from IPython.display import display
 import pandas as pd
 
 
-def sort_by_cpi(season):
+def get_historical_stats_with_curr_price(season):
     # get previous seasons player stats
-    season = SeasonData(season)
-    last_s_data = season.get_all_players_prev_season_stats()
+    players = PlayerData(season)
+    last_s_data = players.get_all_players_prev_season_stats()
     last_s_data = last_s_data[['first_name', 'second_name', 'total_points', 'minutes', 'team_name', 'position']]
     # remove players who have not played around 30 games
     last_s_data = last_s_data.drop(last_s_data[last_s_data.minutes < 90 * 30].index)
 
     # get current season player stats
-    this_s_data = season.get_all_players_curr_season_stats()
+    this_s_data = players.get_all_players_curr_season_stats()
     this_s_data = this_s_data[['first_name', 'second_name', 'initial_cost', 'team_name', 'position']]
 
     # merge together, this eliminates players who are newly promoted or relegated
@@ -25,104 +25,105 @@ def sort_by_cpi(season):
 
     # find if players have changed teams?------------------------------------------------------------------------
 
-    # derive points_per_mil, points_per_min and cpi
-    merged_df['points_per_mil'] = np.where(merged_df['initial_cost'] != 0,
-                                           merged_df['total_points'] / merged_df['initial_cost'], 0)
-    merged_df['points_per_min'] = np.where(merged_df['initial_cost'] != 0,
-                                           merged_df['total_points'] / merged_df['minutes'], 0)
-    max_ppm = merged_df['points_per_mil'].max()
-    max_ppmin = merged_df['points_per_min'].max()
-    merged_df['cpi'] = merged_df.apply(lambda row: row['points_per_mil'] / max_ppm + row['points_per_min'] / max_ppmin,
-                                       axis=1)
-    merged_df['is_goalkeeper'] = merged_df.apply(lambda row: row['position'] == "GK", axis=1)
-    merged_df['is_defender'] = merged_df.apply(lambda row: row['position'] == "DEF", axis=1)
-    merged_df['is_midfielder'] = merged_df.apply(lambda row: row['position'] == "MID", axis=1)
-    merged_df['is_forward'] = merged_df.apply(lambda row: row['position'] == "FWD", axis=1)
-
-    return merged_df.sort_values(by=['cpi'], ascending=False)
+    return merged_df
 
 
-def add_team_dummy(df):
-    for t in df.team_name.unique():
-        df['team_' + str(t)] = np.where(df.team_name == t, int(1), int(0))
-    return df
-def make_11_lp(season):
-    cpi_df = sort_by_cpi(season)
+def make_initial_team_lp(season):
+    # filtered dataframe
+    data = get_historical_stats_with_curr_price(season)
+    data['name'] = data.apply(lambda row: row['first_name'] + " " + row['second_name'], axis=1)
 
-    constraints = {
-        "GK": 2,
-        "DEF": 5,
-        "MID": 5,
-        "FWD": 3,
-        "total_cost": 1000,
-        "max_common_team": 3
-    }
-    max_cost = 1000
-
-    fpl_problem = pulp.LpProblem('FPL', pulp.LpMaximize)
-
-    cpi_df['full_name'] = cpi_df.apply(lambda row: row['first_name'] + " " + row['second_name'], axis=1)
-
-    cpi_df = add_team_dummy(cpi_df)
-
-    players = cpi_df.full_name
-
-    # create a dictionary of pulp variables with keys from names
-    x = pulp.LpVariable.dict('x_ % s', players, lowBound=0, upBound=1,
-                             cat=pulp.LpInteger)
-
-    # player score data
-    player_points = dict(
-        zip(cpi_df.full_name, np.array(cpi_df["total_points"])))
-
-    # objective function
-    fpl_problem += sum([player_points[i] * x[i] for i in players])
-
-    # could get straight from dataframe...
-    player_cost = dict(zip(cpi_df.full_name, cpi_df.initial_cost))
-    player_position = dict(zip(cpi_df.full_name, cpi_df.position))
-    player_gk = dict(zip(cpi_df.full_name, cpi_df.is_goalkeeper))
-    player_def = dict(zip(cpi_df.full_name, cpi_df.is_defender))
-    player_mid = dict(zip(cpi_df.full_name, cpi_df.is_midfielder))
-    player_fwd = dict(zip(cpi_df.full_name, cpi_df.is_forward))
-
-    # apply the constraints
-    fpl_problem += sum([player_cost[i] * x[i] for i in players]) <= float(constraints['total_cost'])
-    fpl_problem += sum([player_gk[i] * x[i] for i in players]) == constraints['GK']
-    fpl_problem += sum([player_def[i] * x[i] for i in players]) == constraints['DEF']
-    fpl_problem += sum([player_mid[i] * x[i] for i in players]) == constraints['MID']
-    fpl_problem += sum([player_fwd[i] * x[i] for i in players]) == constraints['FWD']
-
-    for t in cpi_df.team_name:
-        player_team = dict(
-            zip(cpi_df.full_name, cpi_df['team_' + str(t)]))
-        fpl_problem += sum([player_team[i] * x[i] for i in players]) <= constraints['max_common_team']
-
-    # solve the thing
-    fpl_problem.solve()
-
-    total_points = 0.
-    total_cost = 0.
-    optimal_squad = []
-    for p in players:
-        if x[p].value() != 0:
-            total_points += player_points[p]
-            total_cost += player_cost[p]
-
-            optimal_squad.append({
-                'name': p,
-                'position': player_position[p],
-                'cost': player_cost[p],
-                'points': player_points[p]
-            })
-
-    solution_info = {
-        'total_points': total_points,
-        'total_cost': total_cost
+    # constraint variables
+    POS = data.position.unique()
+    CLUBS = data.team_name.unique()
+    BUDGET = 1000
+    pos_available = {
+        'DEF': 5,
+        'FWD': 3,
+        'MID': 5,
+        'GK': 2
     }
 
-    return optimal_squad, solution_info
+    # Initialize Variables
+    names = [data.name[i] for i in data.index]
+    teams = [data.team_name[i] for i in data.index]
+    positions = [data.position[i] for i in data.index]
+    prices = [data.initial_cost[i] for i in data.index]
+    points = [data.total_points[i] for i in data.index]
+    players = [pulp.LpVariable("player_" + str(i), cat="Binary") for i in data.index]
 
-print(make_11_lp("2020-21"))
+    # Initialize the problem
+    prob = pulp.LpProblem("FPL Player Choices", pulp.LpMaximize)
+
+    # Define the objective
+    prob += pulp.lpSum(players[i] * points[i] for i in range(len(data)))
+
+    # Build the constraints
+    # constraint 1: Budget
+    prob += pulp.lpSum(players[i] * data.initial_cost[data.index[i]] for i in range(len(data))) <= BUDGET
+
+    # constraint 2: Position limit (2 for GK, 5 for DEF, 5 for MID, 3 for FWD)
+    for pos in POS:
+        prob += pulp.lpSum(players[i] for i in range(len(data)) if positions[i] == pos) <= pos_available[pos]
+
+    # constraint 3: Clubs limit (maximum of 3 players from a single club)
+    for club in CLUBS:
+        prob += pulp.lpSum(players[i] for i in range(len(data)) if teams[i] == club) <= 3
+
+    # Solve the problem
+    prob.solve()
+
+    team_df = pd.DataFrame(columns=["name", "club", "position", "historical_points", "starting"])
+    tot_price = 0
+    for v in prob.variables():
+        if v.varValue != 0:
+            name = data.name[int(v.name.split("_")[1])]
+            club = data.team_name[int(v.name.split("_")[1])]
+            position = data.position[int(v.name.split("_")[1])]
+            points = data.total_points[int(v.name.split("_")[1])]
+            price = data.initial_cost[int(v.name.split("_")[1])]
+            # print(name, position, club, points, price, sep=" | ")
+            team_df = team_df.append({"name": name, "club": club, "position": position, "historical_points": points},
+                                     ignore_index=True)
+            tot_price += price
+
+    left_over_money = BUDGET - tot_price
+    return team_df, left_over_money
 
 
+def select_initial_starting_11(season):
+    team = make_initial_team_lp(season)[0]
+    team = team.sort_values("historical_points")
+    starting_df = team.head(11)
+    sub_df = team.tail(4)
+    num_gks_s11 = (starting_df.position == "GK").sum()
+    if num_gks_s11 < 1:
+        gks = team[team.position == "GK"]
+        highest_points_gk = gks.head(1)
+        lowest_points_player = starting_df.tail(1)
+        starting_df = pd.concat([starting_df, lowest_points_player, lowest_points_player]).drop_duplicates(keep=False)
+        sub_df = pd.concat([sub_df, lowest_points_player])
+        starting_df = pd.concat([starting_df, highest_points_gk])
+        sub_df = pd.concat([sub_df, highest_points_gk, highest_points_gk]).drop_duplicates(keep=False)
+    elif num_gks_s11 > 1:
+        gks = starting_df[starting_df.position == "GK"]
+        lowest_points_gk = gks.tail(1)
+        highest_points_sub_player = sub_df.head(1)
+        starting_df = pd.concat([starting_df, lowest_points_gk, lowest_points_gk]).drop_duplicates(keep=False)
+        sub_df = pd.concat([sub_df, lowest_points_gk])
+        starting_df = pd.concat([starting_df, highest_points_sub_player])
+        sub_df = pd.concat([sub_df, highest_points_sub_player, highest_points_sub_player]).drop_duplicates(keep=False)
+
+    defenders_count = (starting_df.position == "DEF").sum()
+    midfielders_count = (starting_df.position == "MID").sum()
+    forwards_count = (starting_df.position == "FWD").sum()
+    print(f"Formation is {defenders_count}-{midfielders_count}-{forwards_count}")
+
+    return starting_df, sub_df
+
+
+team = select_initial_starting_11("2019-20")
+print("Starting:")
+display(team[0])
+print("Subs:")
+display(team[1])
