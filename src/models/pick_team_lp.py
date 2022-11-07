@@ -1,9 +1,6 @@
-import numpy as np
 import pulp as pulp
 
-from player_data import PlayerData
-from src.data.season_data import SeasonData
-from team_data import TeamData
+from src.data.player_data import PlayerData
 from IPython.display import display
 import pandas as pd
 
@@ -67,10 +64,8 @@ def make_initial_team_lp(season):
     }
 
     # Initialize Variables
-    names = [data.name[i] for i in data.index]
     teams = [data.team_name[i] for i in data.index]
     positions = [data.position[i] for i in data.index]
-    prices = [data.initial_cost[i] for i in data.index]
     points = [data.total_points[i] for i in data.index]
     players = [pulp.LpVariable("player_" + str(i), cat="Binary") for i in data.index]
 
@@ -99,14 +94,13 @@ def make_initial_team_lp(season):
     tot_price = 0
     for v in prob.variables():
         if v.varValue != 0:
-            name = data.name[int(v.name.split("_")[1])]
             first_name = data.first_name[int(v.name.split("_")[1])]
             second_name = data.second_name[int(v.name.split("_")[1])]
             club = data.team_name[int(v.name.split("_")[1])]
             position = data.position[int(v.name.split("_")[1])]
             points = data.total_points[int(v.name.split("_")[1])]
             price = data.initial_cost[int(v.name.split("_")[1])]
-            print(first_name, second_name, position, club, points, price, sep=" | ")
+            #print(first_name, second_name, position, club, points, price, sep=" | ")
             team_df = team_df.append({"first_name": first_name, "second_name": second_name, "club": club,
                                       "position": position, "historical_points": points},
                                      ignore_index=True)
@@ -175,7 +169,7 @@ def select_initial_starting_11(season):
     return starting_df, sub_df
 
 
-team = select_initial_starting_11("2019-20")
+team = select_initial_starting_11("2020-21")
 print("Starting:")
 display(team[0])
 print("Subs:")

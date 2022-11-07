@@ -12,7 +12,6 @@ class PlayerData:
         else:
             self._season = season
 
-
     def get_player_id(self, first_name, last_name):
         player_id_path = self._data_location + 'player_idlist.csv'
         df = pd.read_csv(player_id_path)

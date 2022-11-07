@@ -6,7 +6,6 @@ seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
 
 def add_position_to_clean():
     for season in seasons:
-
         data_location = '../../data/historical_data/' + season + "/"
         clean_df = pd.read_csv(data_location + "cleaned_players.csv", encoding="ISO-8859-1")
         if 'element_type' in clean_df.columns:
