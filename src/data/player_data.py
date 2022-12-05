@@ -4,7 +4,7 @@ import pandas as pd
 class PlayerData:
     def __init__(self, season):
         print("placeholder")
-        self._data_location = '../../data/historical_data/' + season + "/"
+        self._data_location = '../../data/' + season + "/"
         self._available_seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
         if season not in self._available_seasons:
             raise ValueError(f"Season {season} is unavailable. Please choose from the following seasons:"
@@ -73,7 +73,7 @@ class PlayerData:
         return df
 
     def get_all_players_curr_season_stats(self):
-        data_location = '../../data/historical_data/' + self._season + "/"
+        data_location = '../../data/' + self._season + "/"
         data_location = data_location + "cleaned_players.csv"
         df = pd.read_csv(data_location, encoding="ISO-8859-1")
         return df

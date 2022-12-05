@@ -8,17 +8,17 @@ seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
 
 def add_team_to_gameweeks():
     for season in seasons:
-        gw_file = '../../data/historical_data/' + season + "/gws/merged_gw.csv"
+        gw_file = '../../data/' + season + "/gws/merged_gw.csv"
         gameweeks_df = pd.read_csv(gw_file, encoding="ISO-8859-1")
 
         if 'team' not in gameweeks_df.columns:
-            file = '../../data/historical_data/' + season + "/cleaned_players.csv"
+            file = '../../data/' + season + "/cleaned_players.csv"
             clean_df = pd.read_csv(file, encoding="ISO-8859-1")
             # this is due to name column changing from name to name with player id
             if season in ["2016-17", "2017-18"]:
                 clean_df['name'] = clean_df.apply(lambda row: row["first_name"] + "_" + row["second_name"], axis=1)
             else:
-                idlist_file = '../../data/historical_data/' + season + '/player_idlist.csv'
+                idlist_file = '../../data/' + season + '/player_idlist.csv'
                 id_df = pd.read_csv(idlist_file, encoding="ISO-8859-1")
                 clean_df = pd.merge(clean_df, id_df, on=["first_name", "second_name"])
                 clean_df['name'] = clean_df.apply(lambda row: row['first_name'] + '_' + row['second_name'] +
@@ -35,10 +35,10 @@ def add_team_to_gameweeks():
 
 def add_position_to_gameweeks():
     for season in seasons:
-        gw_file = '../../data/historical_data/' + season + "/gws/merged_gw.csv"
+        gw_file = '../../data/' + season + "/gws/merged_gw.csv"
         gameweeks_df = pd.read_csv(gw_file, encoding="ISO-8859-1")
 
-        file = '../../data/historical_data/' + season + "/cleaned_players.csv"
+        file = '../../data/' + season + "/cleaned_players.csv"
         clean_df = pd.read_csv(file, encoding="ISO-8859-1")
 
         if 'position' not in gameweeks_df.columns:
@@ -47,7 +47,7 @@ def add_position_to_gameweeks():
             if season in ["2016-17", "2017-18"]:
                 clean_df['name'] = clean_df.apply(lambda row: row["first_name"] + "_" + row["second_name"], axis=1)
             else:
-                idlist_file = '../../data/historical_data/' + season + '/player_idlist.csv'
+                idlist_file = '../../data/' + season + '/player_idlist.csv'
                 id_df = pd.read_csv(idlist_file, encoding="ISO-8859-1")
                 clean_df = pd.merge(clean_df, id_df, on=["first_name", "second_name"])
                 clean_df['name'] = clean_df.apply(lambda row: row['first_name'] + '_' + row['second_name'] +

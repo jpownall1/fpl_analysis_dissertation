@@ -6,7 +6,7 @@ seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
 
 def add_position_to_clean():
     for season in seasons:
-        data_location = '../../data/historical_data/' + season + "/"
+        data_location = '../../data/' + season + "/"
         clean_df = pd.read_csv(data_location + "cleaned_players.csv", encoding="ISO-8859-1")
         if 'element_type' in clean_df.columns:
             clean_df = clean_df.drop('element_type', axis=1)
@@ -35,7 +35,7 @@ def add_position_to_clean():
 
 def add_costs_to_clean():
     for season in seasons:
-        data_location = '../../data/historical_data/' + season + "/"
+        data_location = '../../data/' + season + "/"
         clean_df = pd.read_csv(data_location + "cleaned_players.csv", encoding="ISO-8859-1")
         if 'initial_cost' in clean_df.columns:
             clean_df = clean_df.drop('initial_cost', axis=1)
@@ -54,7 +54,7 @@ def add_costs_to_clean():
 
 def add_team_name_to_clean():
     for season in seasons:
-        data_location = '../../data/historical_data/' + season + "/"
+        data_location = '../../data/' + season + "/"
         clean_df = pd.read_csv(data_location + "cleaned_players.csv", encoding="ISO-8859-1")
         if 'team_name' in clean_df.columns:
             clean_df = clean_df.drop('team_name', axis=1)
@@ -72,7 +72,7 @@ def add_team_name_to_clean():
 
 def select_cols():
     for season in seasons:
-        data_location = '../../data/historical_data/' + season + "/"
+        data_location = '../../data/' + season + "/"
         clean_df = pd.read_csv(data_location + "cleaned_players.csv", encoding="ISO-8859-1")
         clean_df = (clean_df[['first_name', 'second_name', 'goals_scored', 'assists', 'total_points', 'minutes',
                               'goals_conceded', 'creativity', 'influence', 'threat', 'bonus', 'bps', 'ict_index',

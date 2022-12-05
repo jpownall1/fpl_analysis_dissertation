@@ -4,7 +4,7 @@ from season_data import SeasonData
 class TeamData:
     def __init__(self, team_id, season):
         print("placeholder")
-        self._data_location = '../../data/historical_data/' + season + "/"
+        self._data_location = '../../data/' + season + "/"
         self._season = season
         self._team_id = team_id
         self._season_data = SeasonData(season)
