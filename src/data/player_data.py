@@ -1,10 +1,12 @@
 import pandas as pd
+from IPython.core.display_functions import display
+from pathlib import Path
 
 
 class PlayerData:
     def __init__(self, season):
         print("placeholder")
-        self._data_location = '../../data/' + season + "/"
+        self._data_location = str(Path(__file__).parent) + '/../../data/' + season + "/"
         self._available_seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
         if season not in self._available_seasons:
             raise ValueError(f"Season {season} is unavailable. Please choose from the following seasons:"
@@ -59,23 +61,51 @@ class PlayerData:
     def get_all_players_gw_stats(self, game_week):
 
         data_location = self._data_location + "gws/gw" + str(game_week) + ".csv"
-        df = pd.read_csv(data_location, encoding = "ISO-8859-1")
+        df = pd.read_csv(data_location, encoding="ISO-8859-1")
         return df
 
     def get_all_players_prev_season_stats(self):
 
-
-        #changes data location to previous season
-        season = self._season[:2] + str((int(self._season[2:4])-1)) + "-" + str((int(self._season[-2:])-1))
+        # changes data location to previous season
+        season = self._season[:2] + str((int(self._season[2:4]) - 1)) + "-" + str((int(self._season[-2:]) - 1))
 
         data_location = self._data_location + "cleaned_players.csv"
-        df = pd.read_csv(data_location, encoding = "ISO-8859-1")
-        return df
-
-    def get_all_players_curr_season_stats(self):
-        data_location = '../../data/' + self._season + "/"
-        data_location = data_location + "cleaned_players.csv"
         df = pd.read_csv(data_location, encoding="ISO-8859-1")
         return df
 
+    def get_all_players_curr_season_stats(self):
+        data_location = self._data_location + "cleaned_players.csv"
+        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        return df
 
+    def select_random_players(self, number_of_players, condition):
+        """
+        Select a certain number of players from cleaned players based on a condition. Useful for selecting a random
+        number of players of a certain position for variable selection.
+
+        Parameters
+        ----------
+        number_of_players: the number of players to select satisfying the condition,
+        condition: the condition for the players to satisfy, e.g. "POSITION == MID"
+
+        Returns
+        ----------
+        players: a random sample of players satisfying the specified condition
+
+        Examples
+        ----------
+        Selects 3 midfielders at random from the specified season
+        selected_rows = select_samples(df, 3, "position == 'MID'")
+        """
+        # obtain a dataframe of all players for that season
+        all_players_df = self.get_all_players_curr_season_stats()
+
+        # randomly select 'number_of_players' players from this dataframe satisfying condition 'condition'
+        players = all_players_df[all_players_df.eval(condition)].sample(number_of_players)
+
+        return players
+
+
+player_data = PlayerData("2019-20")
+mids = player_data.select_random_players(3, "position == 'MID'")
+display(mids)
