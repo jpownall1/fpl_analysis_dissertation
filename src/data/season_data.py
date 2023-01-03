@@ -1,10 +1,11 @@
 import pandas as pd
+from pathlib import Path
 
 
 class SeasonData:
     def __init__(self, season):
         print("placeholder")
-        self._data_location = '../../data/' + season + "/"
+        self._data_location = str(Path(__file__).parent) + '/../../data/' + season + "/"
         self._season = season
 
     def get_teams(self):
