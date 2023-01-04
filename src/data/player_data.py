@@ -78,15 +78,25 @@ class PlayerData:
         df = pd.read_csv(data_location, encoding="ISO-8859-1")
         return df
 
-    def select_random_players(self, number_of_players, condition):
+    def get_all_players_curr_season_gw_stats(self, gameweek):
+        data_location = self._data_location + "/gws/merged_gw.csv"
+        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        df = df.query(f'GW  == {gameweek}')
+        return df
+
+    def get_all_players_curr_season_merged_gw_stats(self):
+        data_location = self._data_location + "/gws/merged_gw.csv"
+        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        return df
+
+    def select_random_players(self, number_of_players, position):
         """
-        Select a certain number of players from cleaned players based on a condition. Useful for selecting a random
-        number of players of a certain position for variable selection.
+        Randomly select a certain number of players from game week 1 players of a certain position.
 
         Parameters
         ----------
         number_of_players: the number of players to select satisfying the condition,
-        condition: the condition for the players to satisfy, e.g. "POSITION == MID"
+        position: the position for the players to satisfy, e.g. MID
 
         Returns
         ----------
@@ -97,15 +107,15 @@ class PlayerData:
         Selects 3 midfielders at random from the specified season
         selected_rows = select_samples(df, 3, "position == 'MID'")
         """
+        # make sure position is upper case
+        position = position.upper()
+
         # obtain a dataframe of all players for that season
-        all_players_df = self.get_all_players_curr_season_stats()
+        all_players_df = self.get_all_players_curr_season_gw_stats(1)
 
         # randomly select 'number_of_players' players from this dataframe satisfying condition 'condition'
-        players = all_players_df[all_players_df.eval(condition)].sample(number_of_players)
+        players_df = all_players_df[all_players_df.eval(f"position == '{position}'")].sample(number_of_players)
 
-        return players
+        return players_df
 
 
-player_data = PlayerData("2019-20")
-mids = player_data.select_random_players(3, "position == 'MID'")
-display(mids)
