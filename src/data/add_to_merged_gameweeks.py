@@ -3,7 +3,7 @@ from IPython.core.display import display
 
 from src.data.player_data import PlayerData
 
-seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
+seasons = ["2016-17"]  # , "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
 
 
 def add_team_to_gameweeks():
@@ -62,6 +62,53 @@ def add_position_to_gameweeks():
             print(f"Position already in data for season {season}")
 
 
+def add_recent_stats(column_name):
+    for season in seasons:
+        gw_file = '../../data/' + season + "/gws/merged_gw.csv"
+        gameweeks_df = pd.read_csv(gw_file, encoding="ISO-8859-1")
+
+        if ('recent_' + column_name) not in gameweeks_df.columns:
+            # gets the list of gameweek values
+            gameweeks = sorted(gameweeks_df['GW'].unique())
+
+            # initialise dataframe to contain recent stats for players to add to merged gameweeks
+            to_merge_df_list = []
+
+            # add first recent stats which is 0 at the start of the season
+            first_to_merge_df = gameweeks_df.loc[gameweeks_df['GW'] == 1]
+            first_to_merge_df = first_to_merge_df[['name', 'GW']]
+            first_to_merge_df['recent_' + column_name] = 0
+            to_merge_df_list.append(first_to_merge_df)
+
+            # initialise gameweek subsets with subsets of length <5
+            gameweek_subsets = [[1], [1, 2], [1, 2, 3], [1, 2, 3, 4]]
+            # get gameweek subsets of 5 all the way to the end for getting parameters for gameweeks 5-final
+            for i in range(0, len(gameweeks) - 5, 1):
+                gameweek_subsets.append(gameweeks[i:i + 5])
+            print(gameweek_subsets)
+            for subset in gameweek_subsets:
+                subset_df = gameweeks_df[gameweeks_df['GW'].isin(subset)]
+                df_totals = subset_df.groupby('name')[column_name].sum().to_frame(name='recent_' + column_name)
+                df_totals = df_totals.reset_index()
+                # have to do it this way for the gameweek value inconsistency, to put it onto the next gw
+                df_totals["GW"] = gameweeks[gameweeks.index(subset[len(subset) - 1]) + 1]
+                # df_totals["GW"] = subset[len(subset)-1]
+
+                to_merge_df_list.append(df_totals)
+
+            to_merge_df = pd.concat(to_merge_df_list)
+            gameweeks_df = pd.merge(gameweeks_df, to_merge_df, on=["name", "GW"])
+            print(gameweeks_df[['name', 'GW', column_name, 'recent_' + column_name]])
+
+            # save new merged_gw dataframe
+            # gameweeks_df.to_csv(gw_file)
+            gameweeks_df.to_csv('../../data/' + season + "/gws/merged_gw2.csv")
+
+            print(f"Recent goals added for season {season}")
+        else:
+            print(f"Recent goals already in data for season {season}")
+
+
 def select_cols():
     cols = ['opponent_team', 'assists', 'threat', 'selected', 'bonus', 'ict_index', 'fixture', 'red_cards', 'was_home',
             'bps', 'round', 'penalties_missed', 'minutes', 'team', 'name', 'transfers_balance', 'value', 'team_a_score',
@@ -70,7 +117,8 @@ def select_cols():
             'own_goals', 'kickoff_time', 'team_h_score']
 
 
-add_team_to_gameweeks()
-add_position_to_gameweeks()
+# add_team_to_gameweeks()
+# add_position_to_gameweeks()
+add_recent_stats("goals_scored")
 
 print("done")
