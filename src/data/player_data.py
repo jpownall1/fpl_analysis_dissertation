@@ -118,4 +118,7 @@ class PlayerData:
 
         return players_df
 
-
+    def is_player_in_gameweek(self, gameweek, name):
+        players_df = self.get_all_players_curr_season_gw_stats(gameweek)
+        is_name_present = players_df['name'].isin([name]).any()
+        return is_name_present
