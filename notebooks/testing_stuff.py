@@ -13,8 +13,6 @@ def calculate_teams_performance(season, position, subs, parameter="", operator="
     if subs & (not operator or not parameter or not value): raise ValueError("If making subs, specify a parameter, "
                                                                              "operator and value")
 
-    condition = parameter + operator + value
-
     # define player data object to obtain player data
     player_data = PlayerData(season)
     players_df = player_data.select_random_players(3, position)[['name', 'total_points', 'position', 'GW', parameter]]
@@ -56,16 +54,19 @@ def calculate_teams_performance(season, position, subs, parameter="", operator="
 
         # find a player who does not meet condition, if there is one remove and add a player from all players who does
         if subs:
+            if parameter != "was_home":
+                if value == "highest": value = players_df[parameter].max()
+                elif value == "lowest": value = players_df[parameter].min()
+                else: value = int(value)
+            condition = parameter + operator + value
             players_not_meeting_condition = players_df.query("~(" + condition + ")")
             if not players_not_meeting_condition.empty:
                 player_to_remove = players_not_meeting_condition.sample(1).iloc[0]['name']
                 players_df = players_df.drop(players_df[players_df['name'] == player_to_remove].index)
-                # players_df = players_df.drop(player_to_remove.index[0])
                 players_meeting_condition = all_players_df.query(condition)
                 player_to_add = players_meeting_condition.sample(1)
                 players_df = pd.concat([players_df, player_to_add])
 
-        display(players_df)
         points_track.append(calculate_players_total_points(players_df))
 
     # alter points track to show accumulation of points

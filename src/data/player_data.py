@@ -61,7 +61,7 @@ class PlayerData:
     def get_all_players_gw_stats(self, game_week):
 
         data_location = self._data_location + "gws/gw" + str(game_week) + ".csv"
-        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
     def get_all_players_prev_season_stats(self):
@@ -70,23 +70,23 @@ class PlayerData:
         season = self._season[:2] + str((int(self._season[2:4]) - 1)) + "-" + str((int(self._season[-2:]) - 1))
 
         data_location = self._data_location + "cleaned_players.csv"
-        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
     def get_all_players_curr_season_stats(self):
         data_location = self._data_location + "cleaned_players.csv"
-        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
     def get_all_players_curr_season_gw_stats(self, gameweek):
-        data_location = self._data_location + "/gws/merged_gw.csv"
-        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        data_location = self._data_location + "/gws/merged_gw2.csv"
+        df = pd.read_csv(data_location, encoding="utf-8")
         df = df.query(f'GW  == {gameweek}')
         return df
 
     def get_all_players_curr_season_merged_gw_stats(self):
-        data_location = self._data_location + "/gws/merged_gw.csv"
-        df = pd.read_csv(data_location, encoding="ISO-8859-1")
+        data_location = self._data_location + "/gws/merged_gw2.csv"
+        df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
     def select_random_players(self, number_of_players, position):
