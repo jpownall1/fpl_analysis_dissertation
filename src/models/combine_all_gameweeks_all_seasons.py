@@ -6,7 +6,7 @@ def combine_all_gameweeks_all_seasons():
     all_gameweek_dfs = []
     for season in seasons:
         file = '../../data/historical_data/' + season + "/gws/merged_gw2.csv"
-        gw_df = pd.read_csv(file, encoding="utf-8")
+        gw_df = pd.read_csv(file)
         all_gameweek_dfs.append(gw_df)
     all_seasons_gameweeks_data = pd.concat(all_gameweek_dfs)
 

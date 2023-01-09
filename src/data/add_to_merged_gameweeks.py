@@ -3,23 +3,23 @@ from IPython.core.display import display
 
 from src.data.player_data import PlayerData
 
-seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
+seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21"]#, "2021-22"]
 
 
 def add_team_to_gameweeks():
     for season in seasons:
         gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
-        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8")
+        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
 
         if 'team' not in gameweeks_df.columns:
             file = '../../data/' + season + "/cleaned_players.csv"
-            clean_df = pd.read_csv(file, encoding="utf-8")
+            clean_df = pd.read_csv(file, encoding="utf-8-sig")
             # this is due to name column changing from name to name with player id
             if season in ["2016-17", "2017-18"]:
                 clean_df['name'] = clean_df.apply(lambda row: row["first_name"] + "_" + row["second_name"], axis=1)
             else:
                 idlist_file = '../../data/' + season + '/player_idlist.csv'
-                id_df = pd.read_csv(idlist_file, encoding="utf-8")
+                id_df = pd.read_csv(idlist_file, encoding="utf-8-sig")
                 clean_df = pd.merge(clean_df, id_df, on=["first_name", "second_name"], how="left")
                 clean_df['name'] = clean_df.apply(lambda row: row['first_name'] + '_' + row['second_name'] +
                                                               '_' + str(row['id']), axis=1)
@@ -27,7 +27,8 @@ def add_team_to_gameweeks():
             # clean_df = clean_df.rename({'team_name': 'team'})
             clean_df = clean_df[['name', 'team']]
             clean_df = pd.merge(gameweeks_df, clean_df, on=["name"], how="left")
-            clean_df.to_csv(gw_file)
+            find_errors_in_gw(season)
+            clean_df.to_csv(gw_file, encoding="utf-8-sig", index=False)
             print(f"Team added for season {season}")
         else:
             print(f"Team already in data for season {season}")
@@ -36,10 +37,10 @@ def add_team_to_gameweeks():
 def add_position_to_gameweeks():
     for season in seasons:
         gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
-        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8")
+        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
 
         file = '../../data/' + season + "/cleaned_players.csv"
-        clean_df = pd.read_csv(file, encoding="utf-8")
+        clean_df = pd.read_csv(file, encoding="utf-8-sig")
 
         if 'position' not in gameweeks_df.columns:
 
@@ -48,7 +49,7 @@ def add_position_to_gameweeks():
                 clean_df['name'] = clean_df.apply(lambda row: row["first_name"] + "_" + row["second_name"], axis=1)
             else:
                 idlist_file = '../../data/' + season + '/player_idlist.csv'
-                id_df = pd.read_csv(idlist_file, encoding="utf-8")
+                id_df = pd.read_csv(idlist_file, encoding="utf-8-sig")
                 clean_df = pd.merge(clean_df, id_df, on=["first_name", "second_name"], how="left")
                 clean_df['name'] = clean_df.apply(lambda row: row['first_name'] + '_' + row['second_name'] +
                                                               '_' + str(row['id']), axis=1)
@@ -56,7 +57,8 @@ def add_position_to_gameweeks():
             clean_df = clean_df[['name', 'position', 'team_name']]
             clean_df.rename(columns={'team_name': 'team'}, inplace=True)
             clean_df = pd.merge(gameweeks_df, clean_df, on=["name", "team"], how="left")
-            clean_df.to_csv(gw_file)
+            find_errors_in_gw(season)
+            clean_df.to_csv(gw_file, encoding="utf-8-sig", index=False)
             print(f"Position added for season {season}")
         else:
             print(f"Position already in data for season {season}")
@@ -65,7 +67,7 @@ def add_position_to_gameweeks():
 def add_recent_stats(column_name):
     for season in seasons:
         gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
-        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8")
+        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
 
         if ('recent_' + column_name) not in gameweeks_df.columns:
             # gets the list of gameweek values
@@ -100,7 +102,8 @@ def add_recent_stats(column_name):
             # print(gameweeks_df[['name', 'GW', column_name, 'recent_' + column_name]])
 
             # save new merged_gw dataframe
-            gameweeks_df.to_csv(gw_file)
+            find_errors_in_gw(season)
+            gameweeks_df.to_csv(gw_file, encoding="utf-8-sig", index=False)
 
             print('recent_' + column_name + f" added for season {season}")
         else:
@@ -115,43 +118,47 @@ def select_cols():
             'own_goals', 'kickoff_time', 'team_h_score']
 
 
-def find_errors_in_gw():
-    for season in seasons:
-        print(f"------------------------------- For season {season}: -------------------------------")
+def find_errors_in_gw(season):
+    print(f"----------------------------------------- For season {season}: -----------------------------------------")
 
-        gw_file = '../../data/' + season + "/gws/merged_gw.csv"
-        unaltered_gameweeks_df = pd.read_csv(gw_file, encoding="utf-8")
-        gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
-        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8")
+    gw_file = '../../data/' + season + "/gws/merged_gw.csv"
+    unaltered_gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
+    gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
+    gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
 
+    if len(unaltered_gameweeks_df) != len(gameweeks_df):
         print(f"--------------------- Checking length of files: ---------------------")
-        if len(unaltered_gameweeks_df) != len(gameweeks_df):
-            print("Gameweek files are not equal length")
-        else:
-            print("Gameweek files are equal length")
-
-        print(f"--------------------- Checking player occurances: ---------------------")
         # checks if anyone's name occurs more than the original amount of times
         unaltered_name_counts = unaltered_gameweeks_df['name'].value_counts()
         name_counts = gameweeks_df['name'].value_counts()
-        difference = unaltered_name_counts - name_counts
+        difference = name_counts - unaltered_name_counts
         for name, count in difference.items():
             if count != 0:
                 print(f"{name} has occured {count} more times in the altered dataframe")
+        raise ValueError(f"""Gameweek files are not equal length
+        Unaltered file has {len(unaltered_gameweeks_df)} entries
+        New file has {len(gameweeks_df)} entries""")
+    else:
+        print("Gameweek files are equal length")
+
+
+
 
 
 add_team_to_gameweeks()
-# add_position_to_gameweeks()
-# add_recent_stats("goals_scored")
-# add_recent_stats("total_points")
-# add_recent_stats("transfers_in")
-# add_recent_stats("transfers_out")
-# add_recent_stats("yellow_cards")
-# add_recent_stats("red_cards")
-# add_recent_stats("assists")
-# add_recent_stats("tackles")
-# add_recent_stats("clean_sheets")
-# add_recent_stats("saves")
-find_errors_in_gw()
+add_position_to_gameweeks()
+add_recent_stats("goals_scored")
+add_recent_stats("total_points")
+add_recent_stats("yellow_cards")
+add_recent_stats("red_cards")
+add_recent_stats("assists")
+add_recent_stats("clean_sheets")
+add_recent_stats("saves")
+
+# tackles not recorded for seasons 2019-20 onward
+#add_recent_stats("tackles")
+# not sure if these are relevant
+#add_recent_stats("transfers_in")
+#add_recent_stats("transfers_out")
 
 print("done")
