@@ -1,9 +1,6 @@
 import pandas as pd
-from IPython.core.display import display
 
-from src.data.player_data import PlayerData
-
-seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21"]#, "2021-22"]
+seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
 
 
 def add_team_to_gameweeks():
@@ -142,8 +139,20 @@ def find_errors_in_gw(season):
         print("Gameweek files are equal length")
 
 
+def add_id_to_player_name():
+    season = "2021-22"
+    gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
+    gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
+    gameweeks_df["name"] = gameweeks_df["name"] + "_" + gameweeks_df["element"].astype(str)
+    # save new merged_gw dataframe
+    find_errors_in_gw(season)
+    gameweeks_df.to_csv(gw_file, encoding="utf-8-sig", index=False)
+
+    print(f"Player id added to name for season {season}")
 
 
+# do not uncomment unless starting from scratch enriching data. Needed this for duplicate Ben Davies
+# add_id_to_player_name()
 
 add_team_to_gameweeks()
 add_position_to_gameweeks()
@@ -154,11 +163,13 @@ add_recent_stats("red_cards")
 add_recent_stats("assists")
 add_recent_stats("clean_sheets")
 add_recent_stats("saves")
+add_recent_stats("minutes")
 
 # tackles not recorded for seasons 2019-20 onward
-#add_recent_stats("tackles")
+# add_recent_stats("tackles")
 # not sure if these are relevant
-#add_recent_stats("transfers_in")
-#add_recent_stats("transfers_out")
+# add_recent_stats("transfers_in")
+# add_recent_stats("transfers_out")
 
-print("done")
+print()
+print("Enriching data complete.")
