@@ -61,6 +61,34 @@ def add_position_to_gameweeks():
             print(f"Position already in data for season {season}")
 
 
+def add_won_game_to_gameweeks():
+    for season in seasons:
+        gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
+        gameweeks_df = pd.read_csv(gw_file, encoding="utf-8-sig")
+
+        if 'won_game' not in gameweeks_df.columns:
+
+            def calculate_won_game(row):
+                if row['team_h_score'] > row['team_a_score']:
+                    if row['was_home']:
+                        return 1
+                    else:
+                        return 0
+                if row['team_h_score'] < row['team_a_score']:
+                    if row['was_home']:
+                        return 0
+                    else:
+                        return 1
+                return 0
+
+            gameweeks_df["won_game"] = gameweeks_df.apply(lambda row: calculate_won_game(row), axis=1)
+            gameweeks_df.to_csv(gw_file, encoding="utf-8-sig", index=False)
+
+            print(f"Won game added for season {season}")
+        else:
+            print(f"Won game already in data for season {season}")
+
+
 def add_recent_stats(column_name):
     for season in seasons:
         gw_file = '../../data/' + season + "/gws/merged_gw2.csv"
@@ -156,14 +184,19 @@ def add_id_to_player_name():
 
 add_team_to_gameweeks()
 add_position_to_gameweeks()
-add_recent_stats("goals_scored")
+add_won_game_to_gameweeks()
 add_recent_stats("total_points")
-add_recent_stats("yellow_cards")
-add_recent_stats("red_cards")
+add_recent_stats("bps")
+add_recent_stats("minutes")
+add_recent_stats("goals_scored")
+add_recent_stats("goals_conceded")
 add_recent_stats("assists")
 add_recent_stats("clean_sheets")
 add_recent_stats("saves")
-add_recent_stats("minutes")
+add_recent_stats("yellow_cards")
+add_recent_stats("red_cards")
+add_recent_stats("creativity")
+add_recent_stats("won_game")
 
 # tackles not recorded for seasons 2019-20 onward
 # add_recent_stats("tackles")

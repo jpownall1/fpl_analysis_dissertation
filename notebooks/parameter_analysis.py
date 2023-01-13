@@ -127,7 +127,11 @@ def evaluate_teams_performance(season, position, iterations):
         "subs_on_higher_recent_assists": np.zeros(39),
         "subs_on_higher_recent_clean_sheets": np.zeros(39),
         "subs_on_higher_recent_saves": np.zeros(39),
-        "subs_on_higher_recent_minutes": np.zeros(39)
+        "subs_on_higher_recent_minutes": np.zeros(39),
+        "subs_on_higher_recent_bps": np.zeros(39),
+        "subs_on_higher_recent_goals_conceded": np.zeros(39),
+        "subs_on_higher_recent_creativity": np.zeros(39),
+        "subs_on_higher_recent_won_games": np.zeros(39)
     }
 
     for iteration in range(iterations):
@@ -177,6 +181,24 @@ def evaluate_teams_performance(season, position, iterations):
         points_track_dict["subs_on_higher_recent_saves"] += calculate_teams_performance(player_data, random_players_df,
                                                                                         position, True,
                                                                                         "recent_saves", ">", "lowest")
+        points_track_dict["subs_on_higher_recent_bps"] += calculate_teams_performance(player_data, random_players_df,
+                                                                                      position, True,
+                                                                                      "recent_bps", ">", "lowest")
+        points_track_dict["subs_on_higher_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                                 random_players_df,
+                                                                                                 position, True,
+                                                                                                 "recent_goals_conceded",
+                                                                                                 ">", "lowest")
+        points_track_dict["subs_on_higher_recent_creativity"] += calculate_teams_performance(player_data,
+                                                                                             random_players_df,
+                                                                                             position, True,
+                                                                                             "recent_creativity",
+                                                                                             ">", "lowest")
+        points_track_dict["subs_on_higher_recent_won_games"] += calculate_teams_performance(player_data,
+                                                                                            random_players_df,
+                                                                                            position, True,
+                                                                                            "recent_won_game",
+                                                                                            ">", "lowest")
 
         print(f"Iteration {iteration + 1} complete.")
 
@@ -190,10 +212,13 @@ def evaluate_teams_performance(season, position, iterations):
 # get results
 season = "2018-19"
 position = "MID"
-results_dict = evaluate_teams_performance(season, position, 1)
+results_dict = evaluate_teams_performance(season, position, 5)
 # plot results
 for key, value in results_dict.items():
-    plt.plot(value, label=key)
+    if key == "no_subs":
+        plt.plot(value, label=key, linewidth=3.0)
+    else:
+        plt.plot(value, label=key, linewidth=1.0)
 plt.xlabel("Gameweek")
 plt.ylabel("Average Points")
 plt.title(f"Results for season {season} with position {position}")
