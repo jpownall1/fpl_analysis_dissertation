@@ -2,7 +2,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 # access results from pickle file, so I don't need to run this file over and over as it takes a very long time.
-# wb means with byte for faster access
+# rb means read byte for faster access
 pickle_in = open("results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
