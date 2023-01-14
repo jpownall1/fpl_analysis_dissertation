@@ -1,11 +1,9 @@
 import numpy as np
 
-from src.data.season_data import SeasonData
 from src.data.player_data import PlayerData
 from IPython.display import display
 import pandas as pd
-
-import matplotlib.pyplot as plt
+import pickle
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -210,17 +208,40 @@ def evaluate_teams_performance(season, position, iterations):
 
 
 # get results
-season = "2018-19"
-position = "MID"
-results_dict = evaluate_teams_performance(season, position, 5)
-# plot results
-for key, value in results_dict.items():
-    if key == "no_subs":
-        plt.plot(value, label=key, linewidth=3.0)
-    else:
-        plt.plot(value, label=key, linewidth=1.0)
-plt.xlabel("Gameweek")
-plt.ylabel("Average Points")
-plt.title(f"Results for season {season} with position {position}")
-plt.legend()
-plt.show()
+results_dict = {
+    # results for 2016-17
+    "gk_2016-17": evaluate_teams_performance("2016-17", "GK", 1000),
+    "def_2016-17": evaluate_teams_performance("2016-17", "DEF", 1000),
+    "mid_2016-17": evaluate_teams_performance("2016-17", "MID", 1000),
+    "fwd_2016-17": evaluate_teams_performance("2016-17", "FWD", 1000),
+    # results for 2017-18
+    "gk_2017-18": evaluate_teams_performance("2017-18", "GK", 1000),
+    "def_2017-18": evaluate_teams_performance("2017-18", "DEF", 1000),
+    "mid_2017-18": evaluate_teams_performance("2017-18", "MID", 1000),
+    "fwd_2017-18": evaluate_teams_performance("2017-18", "FWD", 1000),
+    # results for 2018-19
+    "gk_2018-19": evaluate_teams_performance("2018-19", "GK", 1000),
+    "def_2018-19": evaluate_teams_performance("2018-19", "DEF", 1000),
+    "mid_2018-19": evaluate_teams_performance("2018-19", "MID", 1000),
+    "fwd_2018-19": evaluate_teams_performance("2018-19", "FWD", 1000),
+    # results for 2019-20
+    "gk_2019-20": evaluate_teams_performance("2019-20", "GK", 1000),
+    "def_2019-20": evaluate_teams_performance("2019-20", "DEF", 1000),
+    "mid_2019-20": evaluate_teams_performance("2019-20", "MID", 1000),
+    "fwd_2019-20": evaluate_teams_performance("2019-20", "FWD", 1000),
+    # results for 2020-21
+    "gk_2020-21": evaluate_teams_performance("2020-21", "GK", 1000),
+    "def_2020-21": evaluate_teams_performance("2020-21", "DEF", 1000),
+    "mid_2020-21": evaluate_teams_performance("2020-21", "MID", 1000),
+    "fwd_2020-21": evaluate_teams_performance("2020-21", "FWD", 1000),
+    # results for 2021-22
+    "gk_2021-22": evaluate_teams_performance("2021-22", "GK", 1000),
+    "def_2021-22": evaluate_teams_performance("2021-22", "DEF", 1000),
+    "mid_2021-22": evaluate_teams_performance("2021-22", "MID", 1000),
+    "fwd_2021-22": evaluate_teams_performance("2021-22", "FWD", 1000)}
+
+# save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
+# wb means with byte for faster access
+pickle_out = open("results_dict.pickle", "wb")
+pickle.dump(results_dict, pickle_out)
+pickle_out.close()
