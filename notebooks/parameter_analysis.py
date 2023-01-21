@@ -4,6 +4,7 @@ from src.data.player_data import PlayerData
 from IPython.display import display
 import pandas as pd
 import pickle
+from concurrent.futures import ProcessPoolExecutor
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -18,11 +19,13 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     if subs & (not operator or not parameter or not value):
         raise ValueError("If making subs, specify a parameter, operator and value")
 
+    # get initial number of players for error checking
+    num_players = initial_players_df.shape[0]
+
     # define player data object to obtain player data
+    players_df = initial_players_df[['name', 'total_points', 'position', 'GW']]
     if subs:
-        players_df = initial_players_df[['name', 'total_points', 'position', 'GW', parameter]]
-    else:
-        players_df = initial_players_df[['name', 'total_points', 'position', 'GW']]
+        players_df[parameter] = initial_players_df[parameter]
 
     # helpful console output for initial team display
     if display_changes:
@@ -36,11 +39,15 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     points_track = [calculate_players_total_points(players_df)]
 
     # get an array of gameweek values (as some don't go 1-38) and sort
-    gameweeks = sorted(player_data.get_all_players_curr_season_merged_gw_stats()['GW'].unique())
+    gameweeks = sorted(player_data.get_all_players_curr_season_merged_gw_stats()['GW'].nunique())
     for gameweek in gameweeks:
         # if there is a duplicate of a player (as sometimes a player has to play twice in a game week as a result
         # of a missed game) then keep the final one for this iteration
-        players_df = players_df.drop_duplicates(subset=['name'], keep='last')
+        players_df = players_df.drop_duplicates(subset=['name'], keep='last', ignore_index=True)
+
+        # make sure there are the right amount of players each iteration
+        if num_players != players_df.shape[0]:
+            raise ValueError(f"Number of players has been changed from to {num_players} to {players_df.shape[0]}")
 
         # obtain a dataframe of all players for that gameweek
         if subs:
@@ -65,7 +72,8 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
         players_not_in_gw_df["total_points"] = 0
 
         # add these back together
-        players_df = pd.concat([players_in_gw_df, players_not_in_gw_df])
+        players_df.update(players_in_gw_df)
+        players_df = players_df.append(players_not_in_gw_df)
 
         # remove players already in players df from all players
         all_players_df = all_players_df[~all_players_df['name'].isin(players_names_list)]
@@ -78,9 +86,9 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
                 elif value == "lowest":
                     value = players_df[parameter].min()
             condition = parameter + operator + str(value)
-            players_not_meeting_condition = players_df.query("~(" + condition + ")")
+            players_not_meeting_condition = players_df[~players_df.eval(condition)]
             if not players_not_meeting_condition.empty:
-                players_meeting_condition = all_players_df.query(condition)
+                players_meeting_condition = all_players_df[all_players_df.eval(condition)]
                 if not players_meeting_condition.empty:
                     # remove a player from the dataframe of players who do not meet the condition
                     player_to_remove = players_not_meeting_condition.sample(1)
@@ -208,38 +216,48 @@ def evaluate_teams_performance(season, position, iterations):
     return points_track_dict
 
 
+def get_results_dict(iterations):
+    # allows use of multiple processes to run the code concurrently
+    with ProcessPoolExecutor() as executor:
+        results = {
+            # results for 2016-17
+            "gk_2016-17": executor.submit(evaluate_teams_performance, "2016-17", "GK", iterations),
+            "def_2016-17": executor.submit(evaluate_teams_performance, "2016-17", "DEF", iterations),
+            "mid_2016-17": executor.submit(evaluate_teams_performance, "2016-17", "MID", iterations),
+            "fwd_2016-17": executor.submit(evaluate_teams_performance, "2016-17", "FWD", iterations),
+            # results for 2017-18
+            "gk_2017-18": executor.submit(evaluate_teams_performance, "2017-18", "GK", iterations),
+            "def_2017-18": executor.submit(evaluate_teams_performance, "2017-18", "DEF", iterations),
+            "mid_2017-18": executor.submit(evaluate_teams_performance, "2017-18", "MID", iterations),
+            "fwd_2017-18": executor.submit(evaluate_teams_performance, "2017-18", "FWD", iterations),
+            # results for 2018-19
+            "gk_2018-19": executor.submit(evaluate_teams_performance, "2018-19", "GK", iterations),
+            "def_2018-19": executor.submit(evaluate_teams_performance, "2018-19", "DEF", iterations),
+            "mid_2018-19": executor.submit(evaluate_teams_performance, "2018-19", "MID", iterations),
+            "fwd_2018-19": executor.submit(evaluate_teams_performance, "2018-19", "FWD", iterations),
+            # results for 2019-20
+            "gk_2019-20": executor.submit(evaluate_teams_performance, "2019-20", "GK", iterations),
+            "def_2019-20": executor.submit(evaluate_teams_performance, "2019-20", "DEF", iterations),
+            "mid_2019-20": executor.submit(evaluate_teams_performance, "2019-20", "MID", iterations),
+            "fwd_2019-20": executor.submit(evaluate_teams_performance, "2019-20", "FWD", iterations),
+            # results for 2020-21
+            "gk_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "GK", iterations),
+            "def_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "DEF", iterations),
+            "mid_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "MID", iterations),
+            "fwd_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "FWD", iterations),
+            # results for 2021-22
+            "gk_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "GK", iterations),
+            "def_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "DEF", iterations),
+            "mid_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "MID", iterations),
+            "fwd_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "FWD", iterations)}
+
+    # the submit function returns a Future object that you can use to obtain the result of the function call when it's
+    # done. the result() method gets the result of the Future object .
+    return {key: value.result() for key, value in results.items()}
+
+
 # get results
-results_dict = {
-    # results for 2016-17
-    "gk_2016-17": evaluate_teams_performance("2016-17", "GK", 1000),
-    "def_2016-17": evaluate_teams_performance("2016-17", "DEF", 1000),
-    "mid_2016-17": evaluate_teams_performance("2016-17", "MID", 1000),
-    "fwd_2016-17": evaluate_teams_performance("2016-17", "FWD", 1000),
-    # results for 2017-18
-    "gk_2017-18": evaluate_teams_performance("2017-18", "GK", 1000),
-    "def_2017-18": evaluate_teams_performance("2017-18", "DEF", 1000),
-    "mid_2017-18": evaluate_teams_performance("2017-18", "MID", 1000),
-    "fwd_2017-18": evaluate_teams_performance("2017-18", "FWD", 1000),
-    # results for 2018-19
-    "gk_2018-19": evaluate_teams_performance("2018-19", "GK", 1000),
-    "def_2018-19": evaluate_teams_performance("2018-19", "DEF", 1000),
-    "mid_2018-19": evaluate_teams_performance("2018-19", "MID", 1000),
-    "fwd_2018-19": evaluate_teams_performance("2018-19", "FWD", 1000),
-    # results for 2019-20
-    "gk_2019-20": evaluate_teams_performance("2019-20", "GK", 1000),
-    "def_2019-20": evaluate_teams_performance("2019-20", "DEF", 1000),
-    "mid_2019-20": evaluate_teams_performance("2019-20", "MID", 1000),
-    "fwd_2019-20": evaluate_teams_performance("2019-20", "FWD", 1000),
-    # results for 2020-21
-    "gk_2020-21": evaluate_teams_performance("2020-21", "GK", 1000),
-    "def_2020-21": evaluate_teams_performance("2020-21", "DEF", 1000),
-    "mid_2020-21": evaluate_teams_performance("2020-21", "MID", 1000),
-    "fwd_2020-21": evaluate_teams_performance("2020-21", "FWD", 1000),
-    # results for 2021-22
-    "gk_2021-22": evaluate_teams_performance("2021-22", "GK", 1000),
-    "def_2021-22": evaluate_teams_performance("2021-22", "DEF", 1000),
-    "mid_2021-22": evaluate_teams_performance("2021-22", "MID", 1000),
-    "fwd_2021-22": evaluate_teams_performance("2021-22", "FWD", 1000)}
+results_dict = get_results_dict(1000)
 
 # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
 # wb means with byte for faster access
