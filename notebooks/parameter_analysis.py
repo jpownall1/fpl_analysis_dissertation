@@ -103,6 +103,11 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
         print("--------------------------------- FINAL TEAM ---------------------------------")
         display(players_df)
 
+    # error check
+    if players_df.drop_duplicates(subset=['name'], keep='last').shape[0] != initial_players_df.shape[0]:
+        raise ValueError(f"""Final team does not have correct amount of players. Something has gone wrong.
+                         {display(players_df)}""")
+
     # alter points track to show accumulation of points
     for i in range(1, len(points_track)):
         points_track[i] = points_track[i - 1] + points_track[i]
