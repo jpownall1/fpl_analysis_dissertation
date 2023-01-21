@@ -204,6 +204,7 @@ def evaluate_teams_performance(season, position, iterations):
     for key in points_track_dict.keys():
         points_track_dict[key] = points_track_dict[key] / iterations
 
+    print(f"Completed for position {position} and season {season}")
     return points_track_dict
 
 
