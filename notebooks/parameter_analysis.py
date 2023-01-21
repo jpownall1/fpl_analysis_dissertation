@@ -5,6 +5,7 @@ from IPython.display import display
 import pandas as pd
 import pickle
 from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import freeze_support
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -45,10 +46,6 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
         # of a missed game) then keep the final one for this iteration
         players_df = players_df.drop_duplicates(subset=['name'], keep='last', ignore_index=True)
 
-        # make sure there are the right amount of players each iteration
-        if num_players != players_df.shape[0]:
-            raise ValueError(f"Number of players has been changed from to {num_players} to {players_df.shape[0]}")
-
         # obtain a dataframe of all players for that gameweek
         if subs:
             all_players_df = player_data.get_all_players_curr_season_gw_stats(gameweek)[['name', 'total_points',
@@ -72,8 +69,7 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
         players_not_in_gw_df["total_points"] = 0
 
         # add these back together
-        players_df.update(players_in_gw_df)
-        players_df = players_df.append(players_not_in_gw_df)
+        players_df = pd.concat([players_in_gw_df, players_not_in_gw_df])
 
         # remove players already in players df from all players
         all_players_df = all_players_df[~all_players_df['name'].isin(players_names_list)]
@@ -86,9 +82,11 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
                 elif value == "lowest":
                     value = players_df[parameter].min()
             condition = parameter + operator + str(value)
-            players_not_meeting_condition = players_df[~players_df.eval(condition)]
+            players_not_meeting_condition = players_df.query("~(" + condition + ")")
+            #players_not_meeting_condition = players_df[~players_df.eval(condition)]
             if not players_not_meeting_condition.empty:
-                players_meeting_condition = all_players_df[all_players_df.eval(condition)]
+                players_meeting_condition = all_players_df.query(condition)
+                #players_meeting_condition = all_players_df[all_players_df.eval(condition)]
                 if not players_meeting_condition.empty:
                     # remove a player from the dataframe of players who do not meet the condition
                     player_to_remove = players_not_meeting_condition.sample(1)
@@ -106,14 +104,15 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
 
         points_track.append(calculate_players_total_points(players_df))
 
+    # helpful console output for final team display
     if display_changes:
-        # helpful console output for final team display
         print("--------------------------------- FINAL TEAM ---------------------------------")
         display(players_df)
 
     # error check
     if players_df.drop_duplicates(subset=['name'], keep='last').shape[0] != initial_players_df.shape[0]:
         raise ValueError(f"""Final team does not have correct amount of players. Something has gone wrong.
+                         Number of players has been changed from {num_players} to {players_df.shape[0]}
                          {display(players_df)}""")
 
     # alter points track to show accumulation of points
@@ -261,11 +260,14 @@ def get_results_dict(iterations):
     return {key: value.result() for key, value in results.items()}
 
 
-# get results
-results_dict = get_results_dict(1000)
+if __name__ == '__main__':
+    freeze_support()
 
-# save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
-# wb means with byte for faster access
-pickle_out = open("results_dict.pickle", "wb")
-pickle.dump(results_dict, pickle_out)
-pickle_out.close()
+    # get results
+    results_dict = get_results_dict(3)
+
+    # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
+    # wb means with byte for faster access
+    pickle_out = open("results_dict.pickle", "wb")
+    pickle.dump(results_dict, pickle_out)
+    pickle_out.close()
