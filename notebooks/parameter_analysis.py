@@ -39,7 +39,7 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     points_track = [calculate_players_total_points(players_df)]
 
     # get an array of gameweek values (as some don't go 1-38) and sort
-    gameweeks = sorted(player_data.get_all_players_curr_season_merged_gw_stats()['GW'].nunique())
+    gameweeks = sorted(player_data.get_all_players_curr_season_merged_gw_stats()['GW'].unique())
     for gameweek in gameweeks:
         # if there is a duplicate of a player (as sometimes a player has to play twice in a game week as a result
         # of a missed game) then keep the final one for this iteration
