@@ -20,9 +20,6 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     if subs & (not operator or not parameter or not value):
         raise ValueError("If making subs, specify a parameter, operator and value")
 
-    # get initial number of players for error checking
-    num_players = initial_players_df.shape[0]
-
     # define player data object to obtain player data
     players_df = initial_players_df[['name', 'total_points', 'position', 'GW']]
     if subs:
@@ -40,30 +37,28 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     points_track = [calculate_players_total_points(players_df)]
 
     # get an array of gameweek values (as some don't go 1-38) and sort
-    gameweeks = sorted(player_data.get_all_players_curr_season_merged_gw_stats()['GW'].unique())
+    gameweeks = sorted(player_data.get_all_players_all_gw_stats()['GW'].unique())
+    gameweeks.pop(0)
     for gameweek in gameweeks:
-        # if there is a duplicate of a player (as sometimes a player has to play twice in a game week as a result
-        # of a missed game) then keep the final one for this iteration
-        players_df = players_df.drop_duplicates(subset=['name'], keep='last', ignore_index=True)
-
         # obtain a dataframe of all players for that gameweek
         if subs:
-            all_players_df = player_data.get_all_players_curr_season_gw_stats(gameweek)[['name', 'total_points',
-                                                                                         'position', 'GW', parameter]]
+            all_players_df = player_data.get_all_players_gw_stats(gameweek)[['name', 'total_points',
+                                                                             'position', 'GW', parameter]]
         else:
-            all_players_df = player_data.get_all_players_curr_season_gw_stats(gameweek)[['name', 'total_points',
-                                                                                         'position', 'GW']]
+            all_players_df = player_data.get_all_players_gw_stats(gameweek)[['name', 'total_points',
+                                                                             'position', 'GW']]
 
         # select only players of the position in question
-        all_players_df = all_players_df[all_players_df.eval(f"position == '{position}'")]
+        all_players_df = all_players_df[all_players_df["position"] == position]
 
         # get a list of the names already in the df
         players_names_list = players_df["name"].values
 
         # update current players who feature in that gameweek with their new gameweek stats
-        players_in_gw_df = all_players_df[all_players_df['name'].isin(players_names_list)]
+        players_in_gw_df = all_players_df[all_players_df['name'].isin(players_names_list)].drop_duplicates(
+            subset=['name'], keep='last', ignore_index=True)
 
-        # for players who dont feature in that gameweek, update prev stats and set points to 0
+        # for players who dont feature in that gameweek, update prev stats by setting points to 0
         players_in_gw_names = players_in_gw_df["name"].values
         players_not_in_gw_df = players_df[~players_df['name'].isin(players_in_gw_names)]
         players_not_in_gw_df["total_points"] = 0
@@ -82,21 +77,23 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
                 elif value == "lowest":
                     value = players_df[parameter].min()
             condition = parameter + operator + str(value)
-            players_not_meeting_condition = players_df.query("~(" + condition + ")")
-            #players_not_meeting_condition = players_df[~players_df.eval(condition)]
+            players_not_meeting_condition = players_df[players_df.eval("~(" + condition + ")")]
             if not players_not_meeting_condition.empty:
-                players_meeting_condition = all_players_df.query(condition)
-                #players_meeting_condition = all_players_df[all_players_df.eval(condition)]
+                players_meeting_condition = all_players_df[all_players_df.eval(condition)]
                 if not players_meeting_condition.empty:
                     # remove a player from the dataframe of players who do not meet the condition
                     player_to_remove = players_not_meeting_condition.sample(1)
-                    players_df = pd.concat([players_df, player_to_remove, player_to_remove]).drop_duplicates(keep=False)
+
+                    players_df = pd.concat([players_df, player_to_remove, player_to_remove]).drop_duplicates(
+                        subset=['name'], keep=False)
                     # add a player from the pool of players available to be transferred who meet the condition
                     player_to_add = players_meeting_condition.sample(1)
                     players_df = pd.concat([players_df, player_to_add])
                     if display_changes:
                         # helpful console output for when the changes make place
                         print(f"---------------------- Gameweek:{gameweek} ----------------------")
+                        print("CURRENT TEAM")
+                        print(players_df)
                         print("PLAYER TRANSFERRED OUT:")
                         display(player_to_remove)
                         print("PLAYER TRANSFERRED IN:")
@@ -104,16 +101,19 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
 
         points_track.append(calculate_players_total_points(players_df))
 
+        # error check
+        if players_df.shape[0] != initial_players_df.shape[0]:
+            break
+
+    if players_df.shape[0] != initial_players_df.shape[0]:
+        raise ValueError(f"""Final team does not have correct amount of players. Something has gone wrong.
+                             Number of players has been changed from {initial_players_df.shape[0]} to {players_df.shape[0]} 
+                             {display(players_df)}""")
+
     # helpful console output for final team display
     if display_changes:
         print("--------------------------------- FINAL TEAM ---------------------------------")
         display(players_df)
-
-    # error check
-    if players_df.drop_duplicates(subset=['name'], keep='last').shape[0] != initial_players_df.shape[0]:
-        raise ValueError(f"""Final team does not have correct amount of players. Something has gone wrong.
-                         Number of players has been changed from {num_players} to {players_df.shape[0]}
-                         {display(players_df)}""")
 
     # alter points track to show accumulation of points
     for i in range(1, len(points_track)):
@@ -127,25 +127,28 @@ def evaluate_teams_performance(season, position, iterations):
     player_data = PlayerData(season)
 
     points_track_dict = {
-        "no_subs": np.zeros(39),
-        "subs_on_was_home": np.zeros(39),
-        "subs_on_was_away": np.zeros(39),
-        "subs_on_higher_recent_total_points": np.zeros(39),
-        "subs_on_higher_recent_goals_scored": np.zeros(39),
-        "subs_on_higher_recent_yellow_cards": np.zeros(39),
-        "subs_on_higher_recent_red_cards": np.zeros(39),
-        "subs_on_higher_recent_assists": np.zeros(39),
-        "subs_on_higher_recent_clean_sheets": np.zeros(39),
-        "subs_on_higher_recent_saves": np.zeros(39),
-        "subs_on_higher_recent_minutes": np.zeros(39),
-        "subs_on_higher_recent_bps": np.zeros(39),
-        "subs_on_higher_recent_goals_conceded": np.zeros(39),
-        "subs_on_higher_recent_creativity": np.zeros(39),
-        "subs_on_higher_recent_won_games": np.zeros(39)
+        "no_subs": np.zeros(38),
+        "subs_on_was_home": np.zeros(38),
+        "subs_on_was_away": np.zeros(38),
+        "subs_on_higher_recent_total_points": np.zeros(38),
+        "subs_on_higher_recent_goals_scored": np.zeros(38),
+        "subs_on_higher_recent_yellow_cards": np.zeros(38),
+        "subs_on_lower_recent_yellow_cards": np.zeros(38),
+        "subs_on_higher_recent_red_cards": np.zeros(38),
+        "subs_on_lower_recent_red_cards": np.zeros(38),
+        "subs_on_higher_recent_assists": np.zeros(38),
+        "subs_on_higher_recent_clean_sheets": np.zeros(38),
+        "subs_on_higher_recent_saves": np.zeros(38),
+        "subs_on_higher_recent_minutes": np.zeros(38),
+        "subs_on_higher_recent_bps": np.zeros(38),
+        "subs_on_higher_recent_goals_conceded": np.zeros(38),
+        "subs_on_lower_recent_goals_conceded": np.zeros(38),
+        "subs_on_higher_recent_creativity": np.zeros(38),
+        "subs_on_higher_recent_won_games": np.zeros(38)
     }
 
     for iteration in range(iterations):
-        random_players_df = player_data.select_random_players(5, position)
+        random_players_df = player_data.select_random_players_from_gw_one(5, position)
         points_track_dict["no_subs"] += calculate_teams_performance(player_data, random_players_df, position, False)
         points_track_dict["subs_on_higher_recent_total_points"] += calculate_teams_performance(player_data,
                                                                                                random_players_df,
@@ -173,11 +176,21 @@ def evaluate_teams_performance(season, position, iterations):
                                                                                                position, True,
                                                                                                "recent_yellow_cards",
                                                                                                ">", "lowest")
+        points_track_dict["subs_on_lower_recent_yellow_cards"] += calculate_teams_performance(player_data,
+                                                                                              random_players_df,
+                                                                                              position, True,
+                                                                                              "recent_yellow_cards",
+                                                                                              "<", "highest")
         points_track_dict["subs_on_higher_recent_red_cards"] += calculate_teams_performance(player_data,
                                                                                             random_players_df, position,
                                                                                             True,
                                                                                             "recent_red_cards", ">",
                                                                                             "lowest")
+        points_track_dict["subs_on_lower_recent_red_cards"] += calculate_teams_performance(player_data,
+                                                                                           random_players_df, position,
+                                                                                           True,
+                                                                                           "recent_red_cards", "<",
+                                                                                           "highest")
         points_track_dict["subs_on_higher_recent_assists"] += calculate_teams_performance(player_data,
                                                                                           random_players_df,
                                                                                           position, True,
@@ -199,6 +212,11 @@ def evaluate_teams_performance(season, position, iterations):
                                                                                                  position, True,
                                                                                                  "recent_goals_conceded",
                                                                                                  ">", "lowest")
+        points_track_dict["subs_on_lower_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                                random_players_df,
+                                                                                                position, True,
+                                                                                                "recent_goals_conceded",
+                                                                                                "<", "highest")
         points_track_dict["subs_on_higher_recent_creativity"] += calculate_teams_performance(player_data,
                                                                                              random_players_df,
                                                                                              position, True,
@@ -218,6 +236,20 @@ def evaluate_teams_performance(season, position, iterations):
 
     print(f"Completed for position {position} and season {season}")
     return points_track_dict
+
+
+def get_average_dict(dict_of_dicts, position):
+    pos_with_seasons = [f"{position}_2016-17", f"{position}_2017-18", f"{position}_2018-19", f"{position}_2019-20"]
+    avg_dict = {key: np.zeros(38) for key in dict_of_dicts[pos_with_seasons[0]].keys()}
+    for pws in pos_with_seasons:
+        for key, value in dict_of_dicts[pws].items():
+            avg_dict[key] = avg_dict[key] + value
+
+    # get average of lists
+    for key, value in dict_of_dicts[pos_with_seasons[0]].items():
+        avg_dict[key] = avg_dict[key] / 4
+
+    return avg_dict
 
 
 def get_results_dict(iterations):
@@ -248,26 +280,42 @@ def get_results_dict(iterations):
             "gk_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "GK", iterations),
             "def_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "DEF", iterations),
             "mid_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "MID", iterations),
-            "fwd_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "FWD", iterations),
-            # results for 2021-22
-            "gk_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "GK", iterations),
-            "def_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "DEF", iterations),
-            "mid_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "MID", iterations),
-            "fwd_2021-22": executor.submit(evaluate_teams_performance, "2021-22", "FWD", iterations)}
+            "fwd_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "FWD", iterations)}
+
+    print("Done")
 
     # the submit function returns a Future object that you can use to obtain the result of the function call when it's
     # done. the result() method gets the result of the Future object .
-    return {key: value.result() for key, value in results.items()}
+    results_dict = {key: value.result() for key, value in results.items()}
+
+    # get average points across all seasons for each param
+    results_dict["gk_avg"] = get_average_dict(results_dict, "gk")
+    results_dict["def_avg"] = get_average_dict(results_dict, "def")
+    results_dict["mid_avg"] = get_average_dict(results_dict, "mid")
+    results_dict["fwd_avg"] = get_average_dict(results_dict, "fwd")
+
+    # get top 5 params for each position
+    for pos in ["gk", "def", "mid", "fwd"]:
+        # Create a list of tuples containing the key and the last value of each list in the dictionary.
+        list_of_tuples = [(k, v[-1]) for k, v in results_dict[f"{pos}_avg"].items()]
+        # Sort the list of tuples based on the last value of each list in descending order.
+        sorted_list = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
+        # Extract the first 5 keys from the sorted list.
+        top_5_keys = [t[0] for t in sorted_list[:5]]
+        # Save top 5 keys as the top params for that position
+        results_dict[f"{pos}_top_params"] = top_5_keys
+
+    return results_dict
 
 
 if __name__ == '__main__':
     freeze_support()
 
     # get results
-    results_dict = get_results_dict(3)
+    result_dict = get_results_dict(100)
 
     # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
     # wb means with byte for faster access
     pickle_out = open("results_dict.pickle", "wb")
-    pickle.dump(results_dict, pickle_out)
+    pickle.dump(result_dict, pickle_out)
     pickle_out.close()

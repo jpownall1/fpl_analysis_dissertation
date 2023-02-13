@@ -24,4 +24,6 @@ def display_results(results, which_result):
     plt.show()
 
 
-display_results(results_dict, "fwd_2021-22")
+print(results_dict["fwd_top_params"])
+display_results(results_dict, "fwd_avg")
+

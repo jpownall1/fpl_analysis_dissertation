@@ -2,6 +2,8 @@ import pandas as pd
 from IPython.core.display_functions import display
 from pathlib import Path
 
+from line_profiler_pycharm import profile
+
 
 class PlayerData:
     def __init__(self, season):
@@ -13,6 +15,9 @@ class PlayerData:
                              f"{self._available_seasons}")
         else:
             self._season = season
+
+        self._merged_gw_stats = None
+        self._gw_stats_dict = None
 
     def get_player_id(self, first_name, last_name):
         player_id_path = self._data_location + 'player_idlist.csv'
@@ -58,12 +63,6 @@ class PlayerData:
         home_or_away = game["was_home"].tolist()[0]
         return home_or_away
 
-    def get_all_players_gw_stats(self, game_week):
-
-        data_location = self._data_location + "gws/gw" + str(game_week) + ".csv"
-        df = pd.read_csv(data_location, encoding="utf-8")
-        return df
-
     def get_all_players_prev_season_stats(self):
 
         # changes data location to previous season
@@ -73,23 +72,29 @@ class PlayerData:
         df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
-    def get_all_players_curr_season_stats(self):
+    def get_all_players_total_curr_season_stats(self):
         data_location = self._data_location + "cleaned_players.csv"
         df = pd.read_csv(data_location, encoding="utf-8")
         return df
 
-    def get_all_players_curr_season_gw_stats(self, gameweek):
-        data_location = self._data_location + "/gws/merged_gw2.csv"
-        df = pd.read_csv(data_location, encoding="utf-8")
-        df = df.query(f'GW  == {gameweek}')
+    def get_all_players_all_gw_stats(self):
+        if self._merged_gw_stats is None:
+            data_location = self._data_location + "/gws/merged_gw2.csv"
+            self._merged_gw_stats = pd.read_csv(data_location, encoding="utf-8")
+
+        df = self._merged_gw_stats
         return df
 
-    def get_all_players_curr_season_merged_gw_stats(self):
-        data_location = self._data_location + "/gws/merged_gw2.csv"
-        df = pd.read_csv(data_location, encoding="utf-8")
+    @profile
+    def get_all_players_gw_stats(self, gameweek):
+        if self._gw_stats_dict is None:
+            merged_gw_df = self.get_all_players_all_gw_stats()
+            self._gw_stats_dict = {gw: df for gw, df in merged_gw_df.groupby("GW")}
+
+        df = self._gw_stats_dict[gameweek]
         return df
 
-    def select_random_players(self, number_of_players, position):
+    def select_random_players_from_gw_one(self, number_of_players, position):
         """
         Randomly select a certain number of players from game week 1 players of a certain position.
 
@@ -111,7 +116,7 @@ class PlayerData:
         position = position.upper()
 
         # obtain a dataframe of all players for that season
-        all_players_df = self.get_all_players_curr_season_gw_stats(1)
+        all_players_df = self.get_all_players_gw_stats(1)
 
         # randomly select 'number_of_players' players from this dataframe satisfying condition 'condition'
         players_df = all_players_df[all_players_df.eval(f"position == '{position}'")].sample(number_of_players)
@@ -119,6 +124,6 @@ class PlayerData:
         return players_df
 
     def is_player_in_gameweek(self, gameweek, name):
-        players_df = self.get_all_players_curr_season_gw_stats(gameweek)
+        players_df = self.get_all_players_gw_stats(gameweek)
         is_name_present = players_df['name'].isin([name]).any()
         return is_name_present
