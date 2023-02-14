@@ -1,4 +1,5 @@
 import numpy as np
+from line_profiler_pycharm import profile
 
 from src.data.player_data import PlayerData
 from IPython.display import display
@@ -15,6 +16,7 @@ def calculate_players_total_points(players_df):
     return total_points
 
 
+@profile
 def calculate_teams_performance(player_data: PlayerData, initial_players_df, position, subs, parameter="", operator="",
                                 value="", display_changes=False):
     if subs & (not operator or not parameter or not value):
@@ -122,30 +124,22 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     return np.asarray(points_track)
 
 
+@profile
 def evaluate_teams_performance(season, position, iterations):
     # define player data object to obtain player data
     player_data = PlayerData(season)
 
-    points_track_dict = {
-        "no_subs": np.zeros(38),
-        "subs_on_was_home": np.zeros(38),
-        "subs_on_was_away": np.zeros(38),
-        "subs_on_higher_recent_total_points": np.zeros(38),
-        "subs_on_higher_recent_goals_scored": np.zeros(38),
-        "subs_on_higher_recent_yellow_cards": np.zeros(38),
-        "subs_on_lower_recent_yellow_cards": np.zeros(38),
-        "subs_on_higher_recent_red_cards": np.zeros(38),
-        "subs_on_lower_recent_red_cards": np.zeros(38),
-        "subs_on_higher_recent_assists": np.zeros(38),
-        "subs_on_higher_recent_clean_sheets": np.zeros(38),
-        "subs_on_higher_recent_saves": np.zeros(38),
-        "subs_on_higher_recent_minutes": np.zeros(38),
-        "subs_on_higher_recent_bps": np.zeros(38),
-        "subs_on_higher_recent_goals_conceded": np.zeros(38),
-        "subs_on_lower_recent_goals_conceded": np.zeros(38),
-        "subs_on_higher_recent_creativity": np.zeros(38),
-        "subs_on_higher_recent_won_games": np.zeros(38)
-    }
+    parameters = ["no_subs", "subs_on_was_home", "subs_on_was_away", "subs_on_higher_recent_total_points",
+                  "subs_on_higher_recent_goals_scored", "subs_on_higher_recent_yellow_cards",
+                  "subs_on_lower_recent_yellow_cards", "subs_on_higher_recent_red_cards",
+                  "subs_on_lower_recent_red_cards",
+                  "subs_on_higher_recent_assists", "subs_on_higher_recent_clean_sheets", "subs_on_higher_recent_saves",
+                  "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps", "subs_on_higher_recent_goals_conceded",
+                  "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
+                  "subs_on_higher_recent_won_games"]
+    points_track_dict = {}
+    for param in parameters:
+        points_track_dict[param] = np.zeros(38)
 
     for iteration in range(iterations):
         random_players_df = player_data.select_random_players_from_gw_one(5, position)
@@ -238,6 +232,7 @@ def evaluate_teams_performance(season, position, iterations):
     return points_track_dict
 
 
+@profile
 def get_average_dict(dict_of_dicts, position):
     pos_with_seasons = [f"{position}_2016-17", f"{position}_2017-18", f"{position}_2018-19", f"{position}_2019-20"]
     avg_dict = {key: np.zeros(38) for key in dict_of_dicts[pos_with_seasons[0]].keys()}
@@ -252,6 +247,7 @@ def get_average_dict(dict_of_dicts, position):
     return avg_dict
 
 
+@profile
 def get_results_dict(iterations):
     # allows use of multiple processes to run the code concurrently
     with ProcessPoolExecutor() as executor:
@@ -301,9 +297,11 @@ def get_results_dict(iterations):
         # Sort the list of tuples based on the last value of each list in descending order.
         sorted_list = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
         # Extract the first 5 keys from the sorted list.
-        top_5_keys = [t[0] for t in sorted_list[:5]]
-        # Save top 5 keys as the top params for that position
-        results_dict[f"{pos}_top_params"] = top_5_keys
+        descending_keys = [t[0] for t in sorted_list]
+        # Turn keys into a tuple with their position in the rankings
+        ranked_keys = [(index + 1, value) for index, value in enumerate(descending_keys)]
+        # Save ranked keys as the top params for that position
+        results_dict[f"{pos}_top_params"] = ranked_keys
 
     return results_dict
 
@@ -312,7 +310,7 @@ if __name__ == '__main__':
     freeze_support()
 
     # get results
-    result_dict = get_results_dict(100)
+    result_dict = get_results_dict(1000)
 
     # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
     # wb means with byte for faster access
