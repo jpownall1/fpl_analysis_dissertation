@@ -44,14 +44,12 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     for gameweek in gameweeks:
         # obtain a dataframe of all players for that gameweek
         if subs:
-            all_players_df = player_data.get_all_players_gw_stats(gameweek)[['name', 'total_points',
-                                                                             'position', 'GW', parameter]]
+            all_players_df = player_data.get_position_players_gw_stats(gameweek, position)[['name', 'total_points',
+                                                                                            'position', 'GW',
+                                                                                            parameter]]
         else:
-            all_players_df = player_data.get_all_players_gw_stats(gameweek)[['name', 'total_points',
-                                                                             'position', 'GW']]
-
-        # select only players of the position in question
-        all_players_df = all_players_df[all_players_df["position"] == position]
+            all_players_df = player_data.get_position_players_gw_stats(gameweek, position)[['name', 'total_points',
+                                                                                            'position', 'GW']]
 
         # get a list of the names already in the df
         players_names_list = players_df["name"].values
@@ -124,7 +122,6 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, pos
     return np.asarray(points_track)
 
 
-@profile
 def evaluate_teams_performance(season, position, iterations):
     # define player data object to obtain player data
     player_data = PlayerData(season)
@@ -137,9 +134,8 @@ def evaluate_teams_performance(season, position, iterations):
                   "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps", "subs_on_higher_recent_goals_conceded",
                   "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
                   "subs_on_higher_recent_won_games"]
-    points_track_dict = {}
-    for param in parameters:
-        points_track_dict[param] = np.zeros(38)
+
+    points_track_dict = {param: np.zeros(38) for param in parameters}
 
     for iteration in range(iterations):
         random_players_df = player_data.select_random_players_from_gw_one(5, position)
@@ -222,32 +218,42 @@ def evaluate_teams_performance(season, position, iterations):
                                                                                             "recent_won_game",
                                                                                             ">", "lowest")
 
-        print(f"Iteration {iteration + 1} complete.")
+        print(f"Iteration {iteration + 1} complete for {position} {season}.")
 
     # change arrays to show average points per game week with subs
     for key in points_track_dict.keys():
         points_track_dict[key] = points_track_dict[key] / iterations
 
-    print(f"Completed for position {position} and season {season}")
+    print(f"Completed all iterations for position {position} for season {season}")
     return points_track_dict
 
 
-@profile
 def get_average_dict(dict_of_dicts, position):
-    pos_with_seasons = [f"{position}_2016-17", f"{position}_2017-18", f"{position}_2018-19", f"{position}_2019-20"]
-    avg_dict = {key: np.zeros(38) for key in dict_of_dicts[pos_with_seasons[0]].keys()}
-    for pws in pos_with_seasons:
-        for key, value in dict_of_dicts[pws].items():
-            avg_dict[key] = avg_dict[key] + value
+    # define the seasons as a constant list
+    seasons = ["2016-17", "2017-18", "2018-19", "2019-20"]
 
-    # get average of lists
-    for key, value in dict_of_dicts[pos_with_seasons[0]].items():
-        avg_dict[key] = avg_dict[key] / 4
+    # create a new dictionary to store the average values
+    avg_dict = {}
 
+    # loop over the seasons
+    for season in seasons:
+        # get the stats for the given position and season
+        stats = dict_of_dicts[f"{position}_{season}"]
+
+        # loop over the stats
+        for key, value in stats.items():
+            # set the initial value of a key to zero if it doesn't exist
+            avg_dict.setdefault(key, np.zeros(38))
+            # add the value to the key in the avg_dict
+            avg_dict[key] += value
+
+    # compute the average value of each key using list comprehension
+    avg_dict = {key: value / len(seasons) for key, value in avg_dict.items()}
+
+    # return the average dictionary
     return avg_dict
 
 
-@profile
 def get_results_dict(iterations):
     # allows use of multiple processes to run the code concurrently
     with ProcessPoolExecutor() as executor:
@@ -278,8 +284,6 @@ def get_results_dict(iterations):
             "mid_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "MID", iterations),
             "fwd_2020-21": executor.submit(evaluate_teams_performance, "2020-21", "FWD", iterations)}
 
-    print("Done")
-
     # the submit function returns a Future object that you can use to obtain the result of the function call when it's
     # done. the result() method gets the result of the Future object .
     results_dict = {key: value.result() for key, value in results.items()}
@@ -303,6 +307,8 @@ def get_results_dict(iterations):
         # Save ranked keys as the top params for that position
         results_dict[f"{pos}_top_params"] = ranked_keys
 
+    print("Results obtained.")
+
     return results_dict
 
 
@@ -310,10 +316,12 @@ if __name__ == '__main__':
     freeze_support()
 
     # get results
-    result_dict = get_results_dict(1000)
+    result_dict = get_results_dict(1)
 
     # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
     # wb means with byte for faster access
+    print("Saving to pickle file")
     pickle_out = open("results_dict.pickle", "wb")
     pickle.dump(result_dict, pickle_out)
     pickle_out.close()
+    print("Pickle file saved as 'results_dict.pickle'")

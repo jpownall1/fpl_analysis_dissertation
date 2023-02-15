@@ -10,6 +10,14 @@ class PlayerData:
         print("placeholder")
         self._data_location = str(Path(__file__).parent) + '/../../data/' + season + "/"
         self._available_seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
+        self._parameters = ["no_subs", "subs_on_was_home", "subs_on_was_away", "subs_on_higher_recent_total_points",
+                  "subs_on_higher_recent_goals_scored", "subs_on_higher_recent_yellow_cards",
+                  "subs_on_lower_recent_yellow_cards", "subs_on_higher_recent_red_cards",
+                  "subs_on_lower_recent_red_cards",
+                  "subs_on_higher_recent_assists", "subs_on_higher_recent_clean_sheets", "subs_on_higher_recent_saves",
+                  "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps", "subs_on_higher_recent_goals_conceded",
+                  "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
+                  "subs_on_higher_recent_won_games"]
         if season not in self._available_seasons:
             raise ValueError(f"Season {season} is unavailable. Please choose from the following seasons:"
                              f"{self._available_seasons}")
@@ -18,6 +26,8 @@ class PlayerData:
 
         self._merged_gw_stats = None
         self._gw_stats_dict = None
+        self._gw_pos_stats_dict = None
+        self._gw_condition_stats_dict = None
 
     def get_player_id(self, first_name, last_name):
         player_id_path = self._data_location + 'player_idlist.csv'
@@ -93,6 +103,36 @@ class PlayerData:
 
         df = self._gw_stats_dict[gameweek]
         return df
+
+    def get_position_players_gw_stats(self, gameweek, position):
+        if self._gw_pos_stats_dict is None:
+            self._gw_pos_stats_dict = {}
+
+        if gameweek not in self._gw_pos_stats_dict:
+            gw_df = self.get_all_players_gw_stats(gameweek)
+            self._gw_pos_stats_dict[gameweek] = {}
+            self._gw_pos_stats_dict[gameweek]["FWD"] = gw_df[gw_df["position"] == "FWD"]
+            self._gw_pos_stats_dict[gameweek]["MID"] = gw_df[gw_df["position"] == "MID"]
+            self._gw_pos_stats_dict[gameweek]["DEF"] = gw_df[gw_df["position"] == "DEF"]
+            self._gw_pos_stats_dict[gameweek]["GK"] = gw_df[gw_df["position"] == "GK"]
+
+        return self._gw_pos_stats_dict[gameweek][position]
+
+    def get_players_meeting_condition_or_not(self, gameweek, condition, meeting):
+        if self._gw_condition_stats_dict is None:
+            self._gw_condition_stats_dict = {}
+            self._gw_condition_stats_dict[condition] = {}
+            df = self.get_all_players_gw_stats(gameweek)
+            players_not_meeting_condition = df[~df.eval(condition)]
+            players_meeting_condition = df[df.eval(condition)]
+            self._gw_condition_stats_dict[condition]["nm"] = players_not_meeting_condition
+            self._gw_condition_stats_dict[condition]["m"] = players_meeting_condition
+
+        if meeting:
+            return self._gw_condition_stats_dict[condition]["m"]
+        else:
+            return self._gw_condition_stats_dict[condition]["nm"]
+
 
     def select_random_players_from_gw_one(self, number_of_players, position):
         """
