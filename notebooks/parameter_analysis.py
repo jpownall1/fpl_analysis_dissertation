@@ -316,7 +316,7 @@ if __name__ == '__main__':
     freeze_support()
 
     # get results
-    result_dict = get_results_dict(1)
+    result_dict = get_results_dict(1000)
 
     # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
     # wb means with byte for faster access
