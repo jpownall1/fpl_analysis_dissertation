@@ -21,7 +21,7 @@ def display_results(results, which_result):
     season = which_result.split("_")[1]
     plt.xlabel("Gameweek")
     plt.ylabel("Average Points")
-    plt.title(f"Results for season {season} with position {position}")
+    plt.title(f"{position} {season} results")
     plt.legend()
     plt.show()
 

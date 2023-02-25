@@ -17,10 +17,10 @@ for pos in ["gk", "def", "mid", "fwd"]:
     for season in ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "avg"]:
         results_dict[f"{pos}_{season}_ranked_params"] = parameter_analysis.get_ordered_top_params_tuples(results_dict, pos, season)
 
-del results_dict["fwd_top_params"]
-del results_dict["mid_top_params"]
-del results_dict["def_top_params"]
-del results_dict["gk_top_params"]
+#del results_dict["fwd_top_params"]
+#del results_dict["mid_top_params"]
+#del results_dict["def_top_params"]
+#del results_dict["gk_top_params"]
 
 
 

@@ -261,7 +261,7 @@ def get_ordered_top_params_tuples(dict_of_lists, position, season):
     # Extract the keys from the sorted list.
     descending_keys = [t[0] for t in sorted_list]
     # Turn keys into a tuple with their position in the rankings
-    ranked_keys = [(index + 1, value) for index, value in enumerate(descending_keys)]
+    ranked_keys = [(index + 1, t[0], t[1]) for index, t in enumerate(sorted_list)]
     # Save ranked keys as the top params for that position
     return ranked_keys
 
