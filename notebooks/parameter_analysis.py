@@ -253,6 +253,17 @@ def get_average_dict(dict_of_dicts, position):
     # return the average dictionary
     return avg_dict
 
+def get_ordered_top_params_tuples(dict_of_lists, position, season):
+    # Create a list of tuples containing the key and the last value of each list in the dictionary.
+    list_of_tuples = [(k, v[-1]) for k, v in dict_of_lists[f"{position}_{season}"].items()]
+    # Sort the list of tuples based on the last value of each list in descending order.
+    sorted_list = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
+    # Extract the keys from the sorted list.
+    descending_keys = [t[0] for t in sorted_list]
+    # Turn keys into a tuple with their position in the rankings
+    ranked_keys = [(index + 1, value) for index, value in enumerate(descending_keys)]
+    # Save ranked keys as the top params for that position
+    return ranked_keys
 
 def get_results_dict(iterations):
     # allows use of multiple processes to run the code concurrently
@@ -294,18 +305,10 @@ def get_results_dict(iterations):
     results_dict["mid_avg"] = get_average_dict(results_dict, "mid")
     results_dict["fwd_avg"] = get_average_dict(results_dict, "fwd")
 
-    # get top 5 params for each position
+    # get top params for each position
     for pos in ["gk", "def", "mid", "fwd"]:
-        # Create a list of tuples containing the key and the last value of each list in the dictionary.
-        list_of_tuples = [(k, v[-1]) for k, v in results_dict[f"{pos}_avg"].items()]
-        # Sort the list of tuples based on the last value of each list in descending order.
-        sorted_list = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
-        # Extract the first 5 keys from the sorted list.
-        descending_keys = [t[0] for t in sorted_list]
-        # Turn keys into a tuple with their position in the rankings
-        ranked_keys = [(index + 1, value) for index, value in enumerate(descending_keys)]
-        # Save ranked keys as the top params for that position
-        results_dict[f"{pos}_top_params"] = ranked_keys
+        for season in ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "avg"]:
+            results_dict[f"{pos}_{season}_ranked_params"] = get_ordered_top_params_tuples(results_dict, pos, season)
 
     print("Results obtained.")
 
