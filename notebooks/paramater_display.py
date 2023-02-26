@@ -7,12 +7,12 @@ import parameter_analysis
 pickle_in = open("results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
-
+print(results_dict)
 def display_results(results, which_result):
     ordered_params = [t[1] for t in results_dict[f"{which_result}_ranked_params"]]
     # plot results
     for key in ordered_params:
-        if key == "no_subs":
+        if key == "no_transfers":
             plt.plot(results[which_result][key], label=key, linewidth=3.0)
         else:
             plt.plot(results[which_result][key], label=key, linewidth=1.0)

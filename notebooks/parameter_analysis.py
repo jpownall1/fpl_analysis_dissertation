@@ -126,97 +126,108 @@ def evaluate_teams_performance(season, position, iterations):
     # define player data object to obtain player data
     player_data = PlayerData(season)
 
-    parameters = ["no_subs", "subs_on_was_home", "subs_on_was_away", "subs_on_higher_recent_total_points",
-                  "subs_on_higher_recent_goals_scored", "subs_on_higher_recent_yellow_cards",
-                  "subs_on_lower_recent_yellow_cards", "subs_on_higher_recent_red_cards",
-                  "subs_on_lower_recent_red_cards",
-                  "subs_on_higher_recent_assists", "subs_on_higher_recent_clean_sheets", "subs_on_higher_recent_saves",
-                  "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps", "subs_on_higher_recent_goals_conceded",
-                  "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
-                  "subs_on_higher_recent_won_games"]
+    parameters = ["no_transfers", "transfers_on_was_home", "transfers_on_was_away",
+                  "transfers_on_higher_recent_total_points",
+                  "transfers_on_higher_recent_goals_scored", "transfers_on_higher_recent_yellow_cards",
+                  "transfers_on_lower_recent_yellow_cards", "transfers_on_higher_recent_red_cards",
+                  "transfers_on_lower_recent_red_cards", "transfers_on_higher_recent_assists",
+                  "transfers_on_higher_recent_clean_sheets",
+                  "transfers_on_higher_recent_saves", "transfers_on_higher_recent_minutes",
+                  "transfers_on_higher_recent_bps",
+                  "transfers_on_higher_recent_goals_conceded", "transfers_on_lower_recent_goals_conceded",
+                  "transfers_on_higher_recent_creativity", "transfers_on_higher_recent_won_games"]
 
     points_track_dict = {param: np.zeros(38) for param in parameters}
 
     for iteration in range(iterations):
         random_players_df = player_data.select_random_players_from_gw_one(5, position)
-        points_track_dict["no_subs"] += calculate_teams_performance(player_data, random_players_df, position, False)
-        points_track_dict["subs_on_higher_recent_total_points"] += calculate_teams_performance(player_data,
+        points_track_dict["no_transfers"] += calculate_teams_performance(player_data, random_players_df, position,
+                                                                         False)
+        points_track_dict["transfers_on_higher_recent_total_points"] += calculate_teams_performance(player_data,
+                                                                                                    random_players_df,
+                                                                                                    position, True,
+                                                                                                    "recent_total_points",
+                                                                                                    ">", "lowest")
+        points_track_dict["transfers_on_higher_recent_minutes"] += calculate_teams_performance(player_data,
                                                                                                random_players_df,
                                                                                                position, True,
-                                                                                               "recent_total_points",
-                                                                                               ">", "lowest")
-        points_track_dict["subs_on_higher_recent_minutes"] += calculate_teams_performance(player_data,
-                                                                                          random_players_df,
-                                                                                          position, True,
-                                                                                          "recent_minutes", ">",
-                                                                                          "lowest")
-        points_track_dict["subs_on_was_home"] += calculate_teams_performance(player_data, random_players_df, position,
-                                                                             True, "was_home", "==",
-                                                                             "True")
-        points_track_dict["subs_on_was_away"] += calculate_teams_performance(player_data, random_players_df, position,
-                                                                             True, "was_home", "==",
-                                                                             "False")
-        points_track_dict["subs_on_higher_recent_goals_scored"] += calculate_teams_performance(player_data,
-                                                                                               random_players_df,
-                                                                                               position, True,
-                                                                                               "recent_goals_scored",
-                                                                                               ">", "lowest")
-        points_track_dict["subs_on_higher_recent_yellow_cards"] += calculate_teams_performance(player_data,
-                                                                                               random_players_df,
-                                                                                               position, True,
-                                                                                               "recent_yellow_cards",
-                                                                                               ">", "lowest")
-        points_track_dict["subs_on_lower_recent_yellow_cards"] += calculate_teams_performance(player_data,
-                                                                                              random_players_df,
-                                                                                              position, True,
-                                                                                              "recent_yellow_cards",
-                                                                                              "<", "highest")
-        points_track_dict["subs_on_higher_recent_red_cards"] += calculate_teams_performance(player_data,
-                                                                                            random_players_df, position,
-                                                                                            True,
-                                                                                            "recent_red_cards", ">",
-                                                                                            "lowest")
-        points_track_dict["subs_on_lower_recent_red_cards"] += calculate_teams_performance(player_data,
-                                                                                           random_players_df, position,
-                                                                                           True,
-                                                                                           "recent_red_cards", "<",
-                                                                                           "highest")
-        points_track_dict["subs_on_higher_recent_assists"] += calculate_teams_performance(player_data,
-                                                                                          random_players_df,
-                                                                                          position, True,
-                                                                                          "recent_assists", ">",
-                                                                                          "lowest")
-        points_track_dict["subs_on_higher_recent_clean_sheets"] += calculate_teams_performance(player_data,
-                                                                                               random_players_df,
-                                                                                               position, True,
-                                                                                               "recent_clean_sheets",
-                                                                                               ">", "lowest")
-        points_track_dict["subs_on_higher_recent_saves"] += calculate_teams_performance(player_data, random_players_df,
-                                                                                        position, True,
-                                                                                        "recent_saves", ">", "lowest")
-        points_track_dict["subs_on_higher_recent_bps"] += calculate_teams_performance(player_data, random_players_df,
-                                                                                      position, True,
-                                                                                      "recent_bps", ">", "lowest")
-        points_track_dict["subs_on_higher_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                               "recent_minutes", ">",
+                                                                                               "lowest")
+        points_track_dict["transfers_on_was_home"] += calculate_teams_performance(player_data, random_players_df,
+                                                                                  position,
+                                                                                  True, "was_home", "==",
+                                                                                  "True")
+        points_track_dict["transfers_on_was_away"] += calculate_teams_performance(player_data, random_players_df,
+                                                                                  position,
+                                                                                  True, "was_home", "==",
+                                                                                  "False")
+        points_track_dict["transfers_on_higher_recent_goals_scored"] += calculate_teams_performance(player_data,
+                                                                                                    random_players_df,
+                                                                                                    position, True,
+                                                                                                    "recent_goals_scored",
+                                                                                                    ">", "lowest")
+        points_track_dict["transfers_on_higher_recent_yellow_cards"] += calculate_teams_performance(player_data,
+                                                                                                    random_players_df,
+                                                                                                    position, True,
+                                                                                                    "recent_yellow_cards",
+                                                                                                    ">", "lowest")
+        points_track_dict["transfers_on_lower_recent_yellow_cards"] += calculate_teams_performance(player_data,
+                                                                                                   random_players_df,
+                                                                                                   position, True,
+                                                                                                   "recent_yellow_cards",
+                                                                                                   "<", "highest")
+        points_track_dict["transfers_on_higher_recent_red_cards"] += calculate_teams_performance(player_data,
                                                                                                  random_players_df,
-                                                                                                 position, True,
-                                                                                                 "recent_goals_conceded",
-                                                                                                 ">", "lowest")
-        points_track_dict["subs_on_lower_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                                 position,
+                                                                                                 True,
+                                                                                                 "recent_red_cards",
+                                                                                                 ">",
+                                                                                                 "lowest")
+        points_track_dict["transfers_on_lower_recent_red_cards"] += calculate_teams_performance(player_data,
                                                                                                 random_players_df,
-                                                                                                position, True,
-                                                                                                "recent_goals_conceded",
-                                                                                                "<", "highest")
-        points_track_dict["subs_on_higher_recent_creativity"] += calculate_teams_performance(player_data,
+                                                                                                position,
+                                                                                                True,
+                                                                                                "recent_red_cards", "<",
+                                                                                                "highest")
+        points_track_dict["transfers_on_higher_recent_assists"] += calculate_teams_performance(player_data,
+                                                                                               random_players_df,
+                                                                                               position, True,
+                                                                                               "recent_assists", ">",
+                                                                                               "lowest")
+        points_track_dict["transfers_on_higher_recent_clean_sheets"] += calculate_teams_performance(player_data,
+                                                                                                    random_players_df,
+                                                                                                    position, True,
+                                                                                                    "recent_clean_sheets",
+                                                                                                    ">", "lowest")
+        points_track_dict["transfers_on_higher_recent_saves"] += calculate_teams_performance(player_data,
                                                                                              random_players_df,
                                                                                              position, True,
-                                                                                             "recent_creativity",
-                                                                                             ">", "lowest")
-        points_track_dict["subs_on_higher_recent_won_games"] += calculate_teams_performance(player_data,
-                                                                                            random_players_df,
-                                                                                            position, True,
-                                                                                            "recent_won_game",
-                                                                                            ">", "lowest")
+                                                                                             "recent_saves", ">",
+                                                                                             "lowest")
+        points_track_dict["transfers_on_higher_recent_bps"] += calculate_teams_performance(player_data,
+                                                                                           random_players_df,
+                                                                                           position, True,
+                                                                                           "recent_bps", ">", "lowest")
+        points_track_dict["transfers_on_higher_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                                      random_players_df,
+                                                                                                      position, True,
+                                                                                                      "recent_goals_conceded",
+                                                                                                      ">", "lowest")
+        points_track_dict["transfers_on_lower_recent_goals_conceded"] += calculate_teams_performance(player_data,
+                                                                                                     random_players_df,
+                                                                                                     position, True,
+                                                                                                     "recent_goals_conceded",
+                                                                                                     "<", "highest")
+        points_track_dict["transfers_on_higher_recent_creativity"] += calculate_teams_performance(player_data,
+                                                                                                  random_players_df,
+                                                                                                  position, True,
+                                                                                                  "recent_creativity",
+                                                                                                  ">", "lowest")
+        points_track_dict["transfers_on_higher_recent_won_games"] += calculate_teams_performance(player_data,
+                                                                                                 random_players_df,
+                                                                                                 position, True,
+                                                                                                 "recent_won_game",
+                                                                                                 ">", "lowest")
 
         print(f"Iteration {iteration + 1} complete for {position} {season}.")
 
@@ -253,6 +264,7 @@ def get_average_dict(dict_of_dicts, position):
     # return the average dictionary
     return avg_dict
 
+
 def get_ordered_top_params_tuples(dict_of_lists, position, season):
     # Create a list of tuples containing the key and the last value of each list in the dictionary.
     list_of_tuples = [(k, v[-1]) for k, v in dict_of_lists[f"{position}_{season}"].items()]
@@ -264,6 +276,7 @@ def get_ordered_top_params_tuples(dict_of_lists, position, season):
     ranked_keys = [(index + 1, t[0], t[1]) for index, t in enumerate(sorted_list)]
     # Save ranked keys as the top params for that position
     return ranked_keys
+
 
 def get_results_dict(iterations):
     # allows use of multiple processes to run the code concurrently
