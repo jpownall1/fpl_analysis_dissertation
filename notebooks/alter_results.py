@@ -1,5 +1,5 @@
 import pickle
-import parameter_analysis
+import variable_analysis
 
 # access results from pickle file, so I don't need to run this file over and over as it takes a very long time.
 # rb means read byte for faster access

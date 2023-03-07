@@ -95,7 +95,7 @@ class PlayerData:
         df = self._merged_gw_stats
         return df
 
-    @profile
+
     def get_all_players_gw_stats(self, gameweek):
         if self._gw_stats_dict is None:
             merged_gw_df = self.get_all_players_all_gw_stats()
