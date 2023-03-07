@@ -1,5 +1,5 @@
 import numpy as np
-from line_profiler_pycharm import profile
+#from line_profiler_pycharm import profile
 
 from src.data.player_data import PlayerData
 from IPython.display import display
@@ -16,7 +16,7 @@ def calculate_players_total_points(players_df):
     return total_points
 
 
-@profile
+#@profile
 def calculate_teams_performance(player_data: PlayerData, initial_players_df, position, subs, parameter="", operator="",
                                 value="", display_changes=False):
     if subs & (not operator or not parameter or not value):

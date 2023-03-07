@@ -7,7 +7,8 @@ import parameter_analysis
 pickle_in = open("results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
-print(results_dict)
+#print(results_dict)
+
 def display_results(results, which_result):
     ordered_params = [t[1] for t in results_dict[f"{which_result}_ranked_params"]]
     # plot results
@@ -26,15 +27,28 @@ def display_results(results, which_result):
     plt.show()
 
 
-display_results(results_dict, "fwd_avg")
+display_results(results_dict, "gk_avg")
 
 
-def print_ranked_params_position(position):
-    print(f"For position {position}:")
-    for season in ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "avg"]:
-        print(f"Season {season}:")
-        print(results_dict[f"{position}_{season}_ranked_params"])
+def get_ranked_params_position_as_latex_table(position, season):
+    if season not in ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "avg"]:
+        raise ValueError("Not a valid season")
+    print(r"""\begin{table}[ht]
+\center
+\begin{adjustbox}{width=1\textwidth}
+\small
+\begin{tabular}{ c c c }
+Ranking & Variable & Average Accumulated Points\\
+\hline""")
+    for rp in results_dict[f"{position}_{season}_ranked_params"]:
+        variable = rp[1].replace('_', r'\_')
+        print(fr"{rp[0]} & {variable} & {int(rp[2])}\\")
+    print(r"""\end{tabular}
+\end{adjustbox}""")
+    print(
+        "\caption{Tabular representation of experimental design results for position " + position + " " + season + "}")
+    print("\label{" + position + " " + season + " table}")
+    print("\end{table}")
 
 
-for position in ["gk", "def", "mid", "fwd"]:
-    print_ranked_params_position(position)
+get_ranked_params_position_as_latex_table("gk", "avg")

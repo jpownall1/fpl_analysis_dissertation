@@ -2,7 +2,7 @@ import pandas as pd
 from IPython.core.display_functions import display
 from pathlib import Path
 
-from line_profiler_pycharm import profile
+#from line_profiler_pycharm import profile
 
 
 class PlayerData:
