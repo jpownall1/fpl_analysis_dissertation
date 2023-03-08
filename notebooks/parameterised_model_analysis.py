@@ -24,4 +24,4 @@ def make_parameter_bar_chart(position):
 
     plt.show()
 
-make_parameter_bar_chart("fwd")
+make_parameter_bar_chart("mid")
