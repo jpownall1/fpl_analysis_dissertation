@@ -26,8 +26,7 @@ variables_dict = {
 results_dict = {}
 def get_linear_regression_results(type, add_predicted_points_to_file=False):
 
-    if add_predicted_points_to_file:
-        list_of_positions_with_pp = []
+    list_of_positions_with_pp = []
 
     for position in ["fwd", "mid", "def", "gk"]:
 
@@ -80,7 +79,7 @@ def get_linear_regression_results(type, add_predicted_points_to_file=False):
 
         if add_predicted_points_to_file:
             test_data["predicted_points"] = Y_pred
-            test_with_predicted_file = list_of_positions_with_pp.append(test_data)
+            list_of_positions_with_pp.append(test_data)
 
         # Calculate the mean absolute error and root mean squared error
         mae = mean_absolute_error(Y_test, Y_pred)
