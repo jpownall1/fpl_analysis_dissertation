@@ -24,9 +24,10 @@ variables_dict = {
 }
 
 results_dict = {}
-def get_linear_regression_results(type):
+def get_linear_regression_results(type, add_predicted_points_to_file=False):
 
-
+    if add_predicted_points_to_file:
+        list_of_positions_with_pp = []
 
     for position in ["fwd", "mid", "def", "gk"]:
 
@@ -55,25 +56,31 @@ def get_linear_regression_results(type):
         X_validation_scaled = scaler.transform(X_validation)
         Y_validation = validation_data['total_points']
 
-        alphas = np.arange(0.1, 10.1, 0.1)
-
         # Create a linear regression model
         if type == "standard":
             model = LinearRegression()
         elif type == "lasso":
             # Use GridSearchCV to find the best alpha
-            model = GridSearchCV(Lasso(), {'alpha': alphas}, cv=5)
+            alphas = np.arange(0.00001, 0.002, 0.00001)
+            model = GridSearchCV(Lasso(), {'alpha': alphas})
         elif type == "ridge":
             # Use GridSearchCV to find the best alpha
-            model = GridSearchCV(Ridge(), {'alpha': alphas}, cv=5)
+            alphas = np.arange(1, 320, 1)
+            model = GridSearchCV(Ridge(), {'alpha': alphas})
 
         # Train the model on the training data
         model.fit(X_train_scaled, Y_train)
+
         if type != "standard":
+            #print(model.cv_results_)
             model = model.best_estimator_
 
         # Use the model to predict the number of points earned by the test samples
         Y_pred = model.predict(X_test_scaled)
+
+        if add_predicted_points_to_file:
+            test_data["predicted_points"] = Y_pred
+            test_with_predicted_file = list_of_positions_with_pp.append(test_data)
 
         # Calculate the mean absolute error and root mean squared error
         mae = mean_absolute_error(Y_test, Y_pred)
@@ -93,7 +100,7 @@ def get_linear_regression_results(type):
         }
 
         # Print the results for test
-        print(f"For {position}, the test set:")
+        print(f"----------------------------------------For {position}, the test set:")
         print(f"Mean absolute error: {mae}")
         print(f"Root mean squared error: {rmse}")
         print(f"R squared value: {r2}")
@@ -110,9 +117,6 @@ def get_linear_regression_results(type):
         rmse_valid = mean_squared_error(Y_validation, Y_pred_valid, squared=False)
         r2_valid = r2_score(Y_validation, Y_pred_valid)
 
-        # Initialise results key for position
-        results_dict[position] = {}
-
         results_dict[position]["validation"] = {
             "variables": variables_dict[position],
             "coefficients": model.coef_,
@@ -123,22 +127,36 @@ def get_linear_regression_results(type):
         }
 
         # Print the results for validation
-        print(f"For {position}, the validation set:")
+        print(f"------------------------------------------------For {position}, the validation set:")
         print(f"Mean absolute error: {mae_valid}")
         print(f"Root mean squared error: {rmse_valid}")
         print(f"R squared value: {r2_valid}")
+        print(f"Coefficients: {model.coef_}")
 
         if type == "lasso" or type == "ridge":
             results_dict[position]["optimal_alpha"] = model.alpha
             print(f"Alpha value for {type} model: {model.alpha}")
 
+    list_of_mae_test = []
+    list_of_mae_valid = []
+    for position in ["fwd", "mid", "def", "gk"]:
+        list_of_mae_test.append(results_dict[position]["test"]["mean_absolute_error"])
+        list_of_mae_valid.append(results_dict[position]["validation"]["mean_absolute_error"])
 
-get_linear_regression_results("ridge")
+    print("------------------------------------------------------------------------------------------")
+    print(f"The average mae on the test for {type} is {sum(list_of_mae_test) / len(list_of_mae_test)}")
+    print(f"The average mae on the validation for {type} is {sum(list_of_mae_valid) / len(list_of_mae_valid)}")
 
-"""
+    if add_predicted_points_to_file:
+        merged_gw_df = pd.concat(list_of_positions_with_pp, axis=0)
+        merged_gw_df.to_csv(data_location + "2021-22_merged_gws_alpha.csv", encoding="utf-8-sig", index=False)
+        print(f"File 2021-22_merged_gws_alpha.csv made at {data_location}")
+
+
+get_linear_regression_results("standard", True)
+print()
 print("Saving to pickle file")
 pickle_out = open("model_results_dict.pickle", "wb")
 pickle.dump(results_dict, pickle_out)
 pickle_out.close()
 print("Pickle file saved as 'model_results_dict.pickle'")
-"""
