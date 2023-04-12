@@ -27,7 +27,7 @@ def display_results(results, which_result):
     plt.show()
 
 
-display_results(results_dict, "gk_avg")
+display_results(results_dict, "fwd_avg")
 
 
 def get_ranked_params_position_as_latex_table(position, season):

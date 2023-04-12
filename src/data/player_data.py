@@ -2,7 +2,8 @@ import pandas as pd
 from IPython.core.display_functions import display
 from pathlib import Path
 
-#from line_profiler_pycharm import profile
+
+# from line_profiler_pycharm import profile
 
 
 class PlayerData:
@@ -11,13 +12,15 @@ class PlayerData:
         self._data_location = str(Path(__file__).parent) + '/../../data/' + season + "/"
         self._available_seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]
         self._parameters = ["no_subs", "subs_on_was_home", "subs_on_was_away", "subs_on_higher_recent_total_points",
-                  "subs_on_higher_recent_goals_scored", "subs_on_higher_recent_yellow_cards",
-                  "subs_on_lower_recent_yellow_cards", "subs_on_higher_recent_red_cards",
-                  "subs_on_lower_recent_red_cards",
-                  "subs_on_higher_recent_assists", "subs_on_higher_recent_clean_sheets", "subs_on_higher_recent_saves",
-                  "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps", "subs_on_higher_recent_goals_conceded",
-                  "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
-                  "subs_on_higher_recent_won_games"]
+                            "subs_on_higher_recent_goals_scored", "subs_on_higher_recent_yellow_cards",
+                            "subs_on_lower_recent_yellow_cards", "subs_on_higher_recent_red_cards",
+                            "subs_on_lower_recent_red_cards",
+                            "subs_on_higher_recent_assists", "subs_on_higher_recent_clean_sheets",
+                            "subs_on_higher_recent_saves",
+                            "subs_on_higher_recent_minutes", "subs_on_higher_recent_bps",
+                            "subs_on_higher_recent_goals_conceded",
+                            "subs_on_lower_recent_goals_conceded", "subs_on_higher_recent_creativity",
+                            "subs_on_higher_recent_won_games"]
         if season not in self._available_seasons:
             raise ValueError(f"Season {season} is unavailable. Please choose from the following seasons:"
                              f"{self._available_seasons}")
@@ -95,7 +98,6 @@ class PlayerData:
         df = self._merged_gw_stats
         return df
 
-
     def get_all_players_gw_stats(self, gameweek):
         if self._gw_stats_dict is None:
             merged_gw_df = self.get_all_players_all_gw_stats()
@@ -132,7 +134,6 @@ class PlayerData:
             return self._gw_condition_stats_dict[condition]["m"]
         else:
             return self._gw_condition_stats_dict[condition]["nm"]
-
 
     def select_random_players_from_gw_one(self, number_of_players, position):
         """
