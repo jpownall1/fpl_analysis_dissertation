@@ -1,5 +1,5 @@
+from notebooks.calculate_performance import calculate_teams_performance
 from notebooks.pick_team_lp import make_initial_team_lp, get_selected_players_gw_data
-from notebooks.make_transfers import calculate_teams_performance
 from src.data.player_data import PlayerData
 
 # get initial, unordered team and left over budget
