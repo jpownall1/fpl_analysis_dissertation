@@ -76,7 +76,7 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
 
     # define player data object to obtain player data
     players_df = initial_players_df[
-        ['name', 'minutes', 'kickoff_time', 'total_points', 'position', 'GW', 'value', variable]].copy()
+        ['name', 'minutes', 'kickoff_time', 'total_points', 'position', 'GW', 'value', "team", variable]].copy()
 
     # helpful console output for initial team display
     if display_changes:
@@ -94,18 +94,19 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
         # obtain a dataframe of all players for that gameweek
         all_players_df = player_data.get_all_players_gw_stats(gameweek)[
             ['name', 'minutes', 'kickoff_time', 'total_points',
-             'position', 'GW', 'value',
+             'position', 'GW', 'value', "team",
              variable]]
 
         # update stats for players in gameweek
         players_df = update_players_stats(players_df, all_players_df)
 
         # transfer player
-        players_df, left_over_budget = transfer_player(all_players_df, players_df, display_changes, gameweek,
-                                                       left_over_budget)
+        players_df, left_over_budget, delta_value, player_transferred_out, \
+        player_transferred_in = transfer_player(all_players_df, players_df, display_changes, gameweek, left_over_budget)
 
         # Organise team and calculate points earnt
-        starting_df, subs_df = organise_team(players_df, "predicted_points")
+        starting_df, subs_df = organise_team(players_df, "predicted_points", player_transferred_out,
+                                             player_transferred_in, delta_value, left_over_budget, display_changes)
         gw_total_points = calculate_players_total_points(starting_df)
         points_track.append(gw_total_points)
 
@@ -123,9 +124,10 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
     return np.asarray(points_track)
 
 
-def calculate_players_total_points(players_df):
+def calculate_players_total_points(players_df, display=False):
     total_points = players_df['total_points'].sum()
-    print(f"Total team points: {total_points}")
+    if display:
+        print(f"Total team points: {total_points}")
     return total_points
 
 

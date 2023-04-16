@@ -12,4 +12,4 @@ selected_players_df = get_selected_players_gw_data(player_data, selected_player_
 
 
 # put team into calculate teams performance
-print(calculate_teams_performance(player_data, selected_players_df, "predicted_points", True, left_over_budget))
+print(calculate_teams_performance(player_data, selected_players_df, "predicted_points", False, left_over_budget))

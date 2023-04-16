@@ -1,11 +1,4 @@
-import numpy as np
-# from line_profiler_pycharm import profile
-
-from src.data.player_data import PlayerData
-from IPython.display import display
-import pandas as pd
 from notebooks.pick_team_lp import *
-from notebooks.organise_team import select_initial_starting_11, organise_team
 
 # set the max_columns option to None
 pd.set_option('display.max_columns', None)
@@ -54,7 +47,7 @@ def transfer_player(all_players_df, players_df, display_changes, gameweek, left_
     display_transfer(left_over_budget, player_to_transfer_in, player_to_transfer_out, gameweek, delta_value,
                      display_changes)
 
-    return players_df, left_over_budget
+    return players_df, left_over_budget, delta_value, player_to_transfer_out['name'].values[0], player_to_transfer_in['name'].values[0]
 
 
 def find_highest_positive_delta_predicted_points(players_df, all_players_df, left_over_budget):
@@ -71,11 +64,8 @@ def find_highest_positive_delta_predicted_points(players_df, all_players_df, lef
         player_gameweek = player['GW']
         player_position = player['position']
 
-        # Filter all_players_df based on the player's value (including left_over_budget), the next gameweek, and position
-        filtered_players = all_players_df[(all_players_df['value'] <= player_value) &
-                                          (all_players_df['GW'] == player_gameweek) &
-                                          (all_players_df['position'] == player_position) &
-                                          (~all_players_df['name'].isin(players_df_names))]
+        filtered_players = filter_for_fpl_conditions(all_players_df, players_df, players_df_names, player_value,
+                                                     player_gameweek, player_position)
 
         # Find the highest predicted points among the filtered players
         highest_predicted_points = filtered_players['predicted_points'].max()
@@ -94,6 +84,22 @@ def find_highest_positive_delta_predicted_points(players_df, all_players_df, lef
                         highest_predicted_points_player['value'].values[0]
 
     return highest_positive_delta_player, highest_predicted_points_player, left_over_budget, highest_positive_delta_value
+
+
+def filter_for_fpl_conditions(all_players_df, players_df, players_df_names, player_value, player_gameweek, player_position):
+    # Filter all_players_df based on the player's value (including left_over_budget), the next gameweek, and position
+    filtered_players = all_players_df[(all_players_df['value'] <= player_value) &
+                                  (all_players_df['GW'] == player_gameweek) &
+                                  (all_players_df['position'] == player_position) &
+                                  (~all_players_df['name'].isin(players_df_names))]
+
+    # Filter out players from a team with already 3 players selected
+    team_counts = players_df['team'].value_counts()
+    for team in team_counts.index:
+        if team_counts[team] == 3:
+            filtered_players = filtered_players[filtered_players['team'] != team]
+
+    return filtered_players
 
 
 def display_transfer(left_over_budget, player_to_add, player_to_remove, gameweek, delta_value, display_changes):

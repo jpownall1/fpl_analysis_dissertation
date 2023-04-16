@@ -61,8 +61,9 @@ def select_initial_starting_11(team, variable):
     return starting_df, subs_df
 
 
-def select_captain_and_vice_captain(players_df):
-    print("-----------------------CAPTAIN & VICE-CAPTAIN-----------------------")
+def select_captain_and_vice_captain(players_df, display):
+    if display:
+        print("-----------------------CAPTAIN & VICE-CAPTAIN-----------------------")
     # Find the index of the player with the highest predicted_points
     highest_predicted_points_index = players_df['predicted_points'].idxmax()
 
@@ -75,25 +76,27 @@ def select_captain_and_vice_captain(players_df):
 
     # Check if the captain has played that week
     if captain_player['minutes'] == 0:
-        print(f"Captain {captain_player['name']} has not played this week.")
         # Double the total_points value for the vice-captain
         players_df.loc[second_highest_predicted_points_index, 'total_points'] *= 2
-        print(
-            f"Selected vice-captain: {vice_captain_player['name']} with predicted points {vice_captain_player['predicted_points']}"
-            f" and actual points {vice_captain_player['total_points']} giving {vice_captain_player['total_points']*2} points")
+        if display:
+            print(f"Captain {captain_player['name']} has not played this week.")
+            print(
+                f"Selected vice-captain: {vice_captain_player['name']} with predicted points {vice_captain_player['predicted_points']}"
+                f" and actual points {vice_captain_player['total_points']} giving {vice_captain_player['total_points'] * 2} points")
     else:
         # Double the total_points value for the captain
         players_df.loc[highest_predicted_points_index, 'total_points'] *= 2
-        print(f"Selected captain: {captain_player['name']} with predicted points {captain_player['predicted_points']}"
-              f" and actual points {captain_player['total_points']} giving {captain_player['total_points']*2} points")
-        print(f"Selected vice-captain: {vice_captain_player['name']} with predicted points {vice_captain_player['predicted_points']}")
+        if display:
+            print(f"Selected captain: {captain_player['name']} with predicted points {captain_player['predicted_points']}"
+                  f" and actual points {captain_player['total_points']} giving {captain_player['total_points'] * 2} points")
+            print(
+                f"Selected vice-captain: {vice_captain_player['name']} with predicted points {vice_captain_player['predicted_points']}")
 
     # Return the modified DataFrame
-    return players_df
+    return players_df, captain_player['name'], vice_captain_player['name']
 
 
 def get_available_positions_to_sub(earliest_kickoff_player, players_df):
-    gk_count = (players_df.position == "GK").sum()
     def_count = (players_df.position == "DEF").sum()
     mid_count = (players_df.position == "MID").sum()
     fwd_count = (players_df.position == "FWD").sum()
@@ -110,11 +113,18 @@ def get_available_positions_to_sub(earliest_kickoff_player, players_df):
         elif earliest_kickoff_player['position'] == 'FWD':
             fwd_count -= 1
 
-        if def_count + 1 >= 3:
+        if def_count + 1 == 3:
+            return ["DEF"]
+        if mid_count + 1 == 3:
+            return ["MID"]
+        if fwd_count + 1 == 1:
+            return ["FWD"]
+
+        if def_count + 1 > 3:
             available_positions.append('DEF')
-        if mid_count + 1 >= 3:
+        if mid_count + 1 > 3:
             available_positions.append('MID')
-        if fwd_count + 1 >= 1:
+        if fwd_count + 1 > 1:
             available_positions.append('FWD')
 
     return available_positions
@@ -136,14 +146,16 @@ def find_suitable_sub(earliest_kickoff_player, players_df, subs_df):
         return None
 
 
-def sub_not_played_player(players_df, subs_df):
-    print("-----------------------SUBSTITUTIONS-----------------------")
+def sub_not_played_player(players_df, subs_df, display):
+    if display:
+        print("-----------------------SUBSTITUTIONS-----------------------")
     zero_minutes_players = players_df[players_df['minutes'] == 0]
 
     # Error check: if there are no players with 0 minutes, return the original dataframes unmodified
     if len(zero_minutes_players) == 0:
-        print("All players in the squad have played, no substitutions found.")
-        return players_df, subs_df
+        if display:
+            print("All players in the squad have played, no substitutions found.")
+        return players_df, subs_df, None, None
 
     # Create a new DataFrame with updated 'kickoff_time' column to avoid SettingWithCopyWarning
     zero_minutes_players = zero_minutes_players.copy()
@@ -157,7 +169,8 @@ def sub_not_played_player(players_df, subs_df):
 
     # Check if a switchable sub is found
     if suitable_sub is not None:
-        print(f"Substitution: {earliest_kickoff_player['name']} -> {suitable_sub['name']}")
+        if display:
+            print(f"Substitution: {earliest_kickoff_player['name']} -> {suitable_sub['name']}")
 
         # Convert earliest_kickoff_player and switchable_sub to DataFrames
         earliest_kickoff_player_df = earliest_kickoff_player.to_frame().T
@@ -167,12 +180,13 @@ def sub_not_played_player(players_df, subs_df):
         subs_df, players_df = switch_player_entry(earliest_kickoff_player_df, subs_df, players_df)
         players_df, subs_df = switch_player_entry(suitable_sub_df, players_df, subs_df)
     else:
-        print("No suitable substitution found.")
+        if display:
+            print("No suitable substitution found.")
 
-    return players_df, subs_df
+    return players_df, subs_df, earliest_kickoff_player['name'], suitable_sub['name']
 
 
-def validate_squad_sizes(starting_df, subs_df):
+def validate_squad_sizes(starting_df, subs_df, display):
     starting_count = starting_df.shape[0]
     subs_count = subs_df.shape[0]
 
@@ -187,29 +201,39 @@ def validate_squad_sizes(starting_df, subs_df):
     if subs_count != 4:
         raise ValueError(f"The subs_df should have 4 players, but it has {subs_count} players.")
 
-    print("Squad size validation passed. Starting 11 and subs have correct number of players.")
+    if display:
+        print("Squad size validation passed. Starting 11 and subs have correct number of players.")
 
 
-def display_team(starting_df, subs_df):
+def get_formation(starting_df):
     # Count the number of DEFs, MIDs, and FWDs in the starting_df
     def_count = (starting_df.position == "DEF").sum()
     mid_count = (starting_df.position == "MID").sum()
     fwd_count = (starting_df.position == "FWD").sum()
 
-    # Print the formation
-    print(f"Formation: {def_count}-{mid_count}-{fwd_count}")
-
-    print("STARTING:")
-    print(starting_df)
-    print("SUBS:")
-    print(subs_df)
+    return f"{def_count}-{mid_count}-{fwd_count}"
 
 
-def organise_team(players_df, variable):
+def display_team(starting_df, subs_df, display):
+    if display:
+        # Print the formation
+        print(f"Formation: {get_formation(starting_df)}")
+
+        print("STARTING:")
+        print(starting_df)
+        print("SUBS:")
+        print(subs_df)
+
+
+def organise_team(players_df, variable, player_transferred_out, player_transferred_in, delta_value, budget, display=False):
     starting_df, subs_df = select_initial_starting_11(players_df, variable)
-    starting_df = select_captain_and_vice_captain(starting_df)
-    starting_df, subs_df = sub_not_played_player(starting_df, subs_df)
-    validate_squad_sizes(starting_df, subs_df)
-    display_team(starting_df, subs_df)
+    starting_df, captain, vice_captain = select_captain_and_vice_captain(starting_df, display)
+    starting_df, subs_df, sub_off, sub_on = sub_not_played_player(starting_df, subs_df, display)
+    validate_squad_sizes(starting_df, subs_df, display)
+    display_team(starting_df, subs_df, display)
+    gameweek = players_df.iloc[0]['GW']
+    string = fr"{int(gameweek)} & {int(budget)} & {player_transferred_out} & {player_transferred_in} & {round(delta_value, 4)} & {sub_off} & {sub_on} & {get_formation(starting_df)} \\"
+    string = string.replace('_', ' ')
+    print(string)
 
     return starting_df, subs_df
