@@ -1,3 +1,16 @@
+"""
+This module, season_data.py, defines a class SeasonData to interact with and
+retrieve various types of season data for Fantasy Premier League (FPL) analysis.
+
+The SeasonData class includes methods to:
+
+Retrieve data for a specific season.
+Get team information for a specific season.
+Get fixture information for a specific season.
+Get fixture information for a specific gameweek within a season.
+"""
+
+
 import pandas as pd
 from pathlib import Path
 

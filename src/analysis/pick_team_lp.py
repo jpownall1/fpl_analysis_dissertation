@@ -1,8 +1,26 @@
-import pulp as pulp
+"""
+pick_team_lp.py
 
-from src.data import player_data
+This module uses Linear Programming (LP) to optimize the selection of an initial Fantasy Premier League (FPL) team based
+on historical player data.
+
+Functions:
+- get_historical_stats_with_curr_price(season): Retrieves a dataframe of filtered historical player stats combined with
+                                                the current season's initial price.
+- make_initial_team_lp(season): Uses LP to pick the initial team for a season based on historical points scored, budget,
+                                and other constraints.
+- update_players_stats(players_df, all_players_df, players_names_list): Updates the statistics of the players in the
+                                                                        'players_df' dataframe with the statistics from
+                                                                        the specified gameweek in the 'all_players_df'
+                                                                        dataframe.
+- convert_to_merged_gw_one(player_data, players_df): Merges the data of the players in 'players_df' with the statistics
+                                                     from the first gameweek of the season.
+- get_selected_players_gw_one_data(player_data, selected_player_names): Returns a dataframe containing the game week 1
+                                                                        stats for the selected players.
+"""
+
+import pulp as pulp
 from src.data.player_data import PlayerData
-from IPython.display import display
 import pandas as pd
 
 
@@ -44,7 +62,7 @@ def make_initial_team_lp(season):
     season - season to pick the team for
 
     returns:
-    team_df - a Pandas dataframe of the picked team
+    selected_players_names - a list of players names from the optimal team
     left_over_money - the amount of money left over from picking the team
     """
     # filtered dataframe
@@ -88,27 +106,6 @@ def make_initial_team_lp(season):
     # Solve the problem
     prob.solve()
 
-    # team_df = pd.DataFrame(columns=["name", "first_name", "second_name", "club", "position", "historical_points"])
-    # tot_price = 0
-    # for v in prob.variables():
-    #    if v.varValue != 0:
-    #        name = data.name[int(v.name.split("_")[1])]
-    #        first_name = data.first_name[int(v.name.split("_")[1])]
-    #        second_name = data.second_name[int(v.name.split("_")[1])]
-    #        club = data.team_name[int(v.name.split("_")[1])]
-    #        position = data.position[int(v.name.split("_")[1])]
-    #        points = data.total_points[int(v.name.split("_")[1])]
-    #        price = data.initial_cost[int(v.name.split("_")[1])]
-    #        # print(first_name, second_name, position, club, points, price, sep=" | ")
-    #        new_row = pd.DataFrame(
-    #            {"name": [name], "first_name": [first_name], "second_name": [second_name], "club": [club],
-    #             "position": [position], "historical_points": [points]})
-    #        team_df = pd.concat([team_df, new_row], ignore_index=True)
-    #        tot_price += price
-    # left_over_money = BUDGET - tot_price
-    # print(team_df)
-    # return team_df, left_over_money
-
     # Collect the names of the selected players and calculate total price
     selected_player_names = []
     tot_price = 0
@@ -124,6 +121,18 @@ def make_initial_team_lp(season):
 
 
 def update_players_stats(players_df, all_players_df, players_names_list):
+    """
+    Updates the statistics of the players in the `players_df` dataframe with the statistics from the specified gameweek
+    in the `all_players_df` dataframe. If a player in the `players_df` dataframe did not feature in the specified
+    gameweek, their previous statistics are updated by setting their points to zero.
+
+    Args:
+        players_df (pd.DataFrame): The dataframe containing the players already selected.
+        all_players_df (pd.DataFrame): The dataframe containing all the players' statistics.
+        players_names_list (list): The list of names of the players already selected.
+    Returns:
+        pd.DataFrame: The updated dataframe containing the players already selected, with their statistics updated.
+    """
     # update current players who feature in that gameweek with their new gameweek stats
     players_in_gw_df = all_players_df[all_players_df['name'].isin(players_names_list)].drop_duplicates(
         subset=['name'], keep='last', ignore_index=True)
@@ -139,6 +148,16 @@ def update_players_stats(players_df, all_players_df, players_names_list):
 
 
 def convert_to_merged_gw_one(player_data, players_df):
+    """
+    Merges the data of the players in `players_df` with the statistics from the first gameweek of the season.
+
+    Args:
+        player_data (PlayerData): The object containing the data for all the players.
+        players_df (pd.DataFrame): The dataframe containing the players already selected.
+    Returns:
+        pd.DataFrame: The updated dataframe containing the players already selected with their statistics from the first
+        gameweek of the season added.
+    """
     # get a list of the names already in the df
     players_names_list = players_df["name"].values
 
@@ -149,25 +168,25 @@ def convert_to_merged_gw_one(player_data, players_df):
     return updated_players_df
 
 
-def get_selected_players_gw_data(player_data, selected_player_names):
+def get_selected_players_gw_one_data(player_data, selected_player_names):
+    """
+    Returns a pandas DataFrame containing the game week 1 stats for the selected players.
+
+    Args:
+        player_data (FplData): The FplData object that contains the data to be filtered.
+        selected_player_names (List[str]): A list of player names to select the stats for.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the game week 1 stats for the selected players.
+    """
     all_players_gw_data = player_data.get_all_players_gw_stats(1)
     selected_players_gw_data = all_players_gw_data[all_players_gw_data['name'].isin(selected_player_names)]
     return selected_players_gw_data
 
 
-# gather team
-#team, left_over_money = make_initial_team_lp("2021-22")[0]
-#player_data = PlayerData("2021-22")
-#team_gw = convert_to_merged_gw_one(player_data, team)
-#team_selected = select_initial_starting_11(player_data, team_gw, "predicted_points")
-#print("Starting:")
-#display(team_selected[0])
-#print("Subs:")
-#display(team_selected[1])
-#print(team_selected[0].columns)
-
-# Gather team
-selected_player_names, left_over_money = make_initial_team_lp("2021-22")
-player_data = PlayerData("2021-22")
-selected_players_gw_data = get_selected_players_gw_data(player_data, selected_player_names)
-print(selected_players_gw_data)
+if __name__ == "__main__":
+    # Gather team
+    selected_player_names, left_over_money = make_initial_team_lp("2021-22")
+    player_data = PlayerData("2021-22")
+    selected_players_gw_data = get_selected_players_gw_one_data(player_data, selected_player_names)
+    print(selected_players_gw_data)

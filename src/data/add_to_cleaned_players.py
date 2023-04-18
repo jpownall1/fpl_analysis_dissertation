@@ -1,3 +1,25 @@
+"""
+add_to_cleaned_players.py: A Python script that adds extra information to cleaned_players.csv files for each season.
+
+This script performs the following tasks:
+
+Adds position, initial cost, and team name columns to the cleaned players DataFrame.
+Selects and orders the columns.
+Adds a name column that combines first name and second name columns.
+Creates a name column with player ID.
+
+Usage:
+Simply run the script with Python interpreter. No arguments are required.
+
+Dependencies:
+- pandas
+- pathlib
+- IPython.core.display_functions
+
+Example:
+$ python add_to_cleaned_players.py
+"""
+
 import pandas as pd
 from pathlib import Path
 

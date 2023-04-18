@@ -1,3 +1,38 @@
+"""
+add_to_merged_gameweeks.py
+This module enriches merged gameweeks data for fantasy football players from different seasons by adding various
+attributes such as team, position, and recent statistics. The seasons considered are from 2016-17 to 2021-22.
+
+Functions
+add_team_to_gameweeks():
+Adds the team name to each player's gameweek record for all seasons.
+
+add_position_to_gameweeks():
+Adds the position of each player to their gameweek record for all seasons.
+
+add_won_game_to_gameweeks():
+Adds a binary variable (1 for win, 0 for loss/draw) to each player's gameweek record for all seasons.
+
+add_recent_stats(column_name: str):
+Adds recent statistics for a given column (e.g. total_points, bps, minutes) for each player in all seasons.
+
+select_cols():
+Selects a list of relevant columns for further analysis.
+
+find_errors_in_gw(season: str):
+Compares the length of the original and enriched gameweek data for a given season and raises an error
+if the lengths are not equal.
+
+add_id_to_player_name():
+Adds the player's ID to their name for season 2021-22. This is needed for duplicate names (e.g. Ben Davies).
+
+Usage
+To enrich the gameweek data, simply call the functions at the end of the script.
+
+Finally, run the script to process the data.
+"""
+
+
 import pandas as pd
 
 seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"]

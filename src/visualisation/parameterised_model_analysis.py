@@ -1,6 +1,5 @@
 import pickle
 import matplotlib.pyplot as plt
-import numpy as np
 
 # access results from pickle file, so I don't need to run this file over and over as it takes a very long time.
 # rb means read byte for faster access
@@ -23,7 +22,6 @@ def make_parameter_bar_chart(position):
     ax.set_facecolor('whitesmoke')
 
     plt.show()
-
 
 
 make_parameter_bar_chart("fwd")

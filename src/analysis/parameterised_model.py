@@ -1,16 +1,34 @@
-import pickle
+"""
+paramaterised_model.py
+This module trains different types of linear regression models (Standard, Lasso, and Ridge) on
+historical football player performance data for each position (Forward, Midfielder, Defender,
+and Goalkeeper) and predicts the total points scored for given test and validation datasets.
 
+Functions
+get_linear_regression_results(type, add_predicted_points_to_file=False):
+Trains a specified type of linear regression model on the training data and predicts total
+points for test and validation datasets, printing the results to the console. Optionally,
+the predicted points can be added to a file.
+
+Notes
+This module assumes that the data files are located in a folder relative to the script.
+The data_location variable should be set accordingly.
+Requires the following libraries: numpy, pandas, scikit-learn, pathlib
+The results_dict will store model results, including Mean Absolute Error (MAE),
+Root Mean Squared Error (RMSE), R-squared, and model coefficients.
+"""
+
+import pickle
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Lasso, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn import preprocessing
-
 from pathlib import Path
 
 from sklearn.model_selection import GridSearchCV
 
-data_location = str(Path(__file__).parent) + '/../data/test_and_train_data/'
+data_location = str(Path(__file__).parent) + '/../../data/test_and_train_data/'
 
 variables_dict = {
     "fwd": ["recent_goals_scored", "recent_clean_sheets", "recent_assists", "recent_yellow_cards",
@@ -24,8 +42,37 @@ variables_dict = {
 }
 
 results_dict = {}
-def get_linear_regression_results(type, add_predicted_points_to_file=False):
 
+
+def get_linear_regression_results(type, add_predicted_points_to_file=False):
+    """
+    Trains a linear regression model on the train_data for each position and then predicts
+    total_points for the test_data and validation_data. The results of the predictions are
+    stored in a dictionary and printed to the console. Optionally, the predicted points can
+    be added to a file.
+
+    Parameters
+    ----------
+    type : str
+        Type of linear regression model to be used. Can be "standard", "lasso", or "ridge".
+    add_predicted_points_to_file : bool, optional
+        If True, the predicted points for each player will be added to a new file.
+        Default is False.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the type is not one of the following: "standard", "lasso", or "ridge".
+
+    Notes
+    -----
+    This function assumes the data files are located in a folder relative to the script.
+    The data_location variable should be set accordingly.
+    """
     list_of_positions_with_pp = []
 
     for position in ["fwd", "mid", "def", "gk"]:
@@ -71,7 +118,7 @@ def get_linear_regression_results(type, add_predicted_points_to_file=False):
         model.fit(X_train_scaled, Y_train)
 
         if type != "standard":
-            #print(model.cv_results_)
+            # print(model.cv_results_)
             model = model.best_estimator_
 
         # Use the model to predict the number of points earned by the test samples
@@ -152,10 +199,11 @@ def get_linear_regression_results(type, add_predicted_points_to_file=False):
         print(f"File 2021-22_merged_gws_alpha.csv made at {data_location}")
 
 
-get_linear_regression_results("standard", True)
-print()
-print("Saving to pickle file")
-pickle_out = open("model_results_dict.pickle", "wb")
-pickle.dump(results_dict, pickle_out)
-pickle_out.close()
-print("Pickle file saved as 'model_results_dict.pickle'")
+if __name__ == "__main__":
+    get_linear_regression_results("standard", True)
+    print()
+    print("Saving to pickle file")
+    pickle_out = open("../visualisation/model_results_dict.pickle", "wb")
+    pickle.dump(results_dict, pickle_out)
+    pickle_out.close()
+    print("Pickle file saved as 'model_results_dict.pickle'")

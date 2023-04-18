@@ -1,41 +1,77 @@
-import numpy as np
+"""
+calculate_performance.py: A module that provides functions to simulate the performance of a fantasy football team.
 
-from notebooks.make_transfers import transfer_player_random, transfer_player
-from notebooks.organise_team import organise_team
-from notebooks.utils import check_team_size
+This module contains functions for calculating the performance of a team of players over a season using different
+strategies. It provides methods for simulating the performance of a team with random transfers, as well as a method for
+calculating the performance using the official FPL rules.
+
+Functions:
+    - calculate_players_performance_random: Simulates a random player performance calculation based on given parameters.
+    - calculate_teams_performance: Calculates the performance of a team over the season, making transfers based on a
+                                   given variable, adhering to the FPL official rules.
+    - calculate_players_total_points: Calculates the total points for a given team of players.
+    - create_condition: Returns a string condition based on the given parameter, operator, value, and players DataFrame.
+    - update_players_stats: Update the stats of the players in players_df using the latest gameweek stats from
+                            all_players_df.
+    - accumulate_points: Calculate the cumulative points for each gameweek in the given points track.
+"""
+
+import numpy as np
+from src.utils.make_transfers import transfer_player_random, transfer_player
+from src.utils.organise_team import organise_team
+from src.utils.utils import check_team_size
 from src.data.player_data import PlayerData
 
 
 def calculate_players_performance_random(player_data: PlayerData, initial_players_df, position, transfers, parameter="",
                                          operator="",
                                          value="", display_changes=False):
+    """
+    Simulates a random player performance calculation based on the given parameters.
+
+    Args:
+        player_data (PlayerData): An object that holds player data.
+        initial_players_df (pd.DataFrame): A dataframe containing the initial players.
+        position (str): The position of the players to consider (e.g., 'FWD', 'MID', 'DEF', 'GK').
+        transfers (bool): A flag to indicate if transfers should be made or not.
+        parameter (str, optional): The parameter to consider when making transfers. Defaults to an empty string.
+        operator (str, optional): The operator to use when comparing the parameter value. Defaults to an empty string.
+        value (str, optional): The value to compare with the parameter using the operator. Defaults to an empty string.
+        display_changes (bool, optional): A flag to indicate if changes should be displayed. Defaults to False.
+
+    Returns:
+        np.ndarray: An array representing accumulated points for each gameweek.
+
+    Raises:
+        ValueError: If transfers are True and parameter, operator, or value is not specified.
+    """
     if transfers & (not operator or not parameter or not value):
         raise ValueError("If making transfers, specify a parameter, operator and value")
 
-    # define player data object to obtain player data
+    # Define player data object to obtain player data
     players_df = initial_players_df[['name', 'total_points', 'position', 'GW']].copy()
     if transfers:
         players_df[parameter] = initial_players_df[parameter]
 
-    # helpful console output for initial team display
+    # Helpful console output for initial team display
     if display_changes:
         print("--------------------------------- INITIAL TEAM ---------------------------------")
         print(players_df)
 
-    # make sure position is upper case
+    # Make sure position is upper case
     position = position.upper()
 
-    # initialise points track with points gained from gw 1 for intial team
+    # Initialise points track with points gained from gw 1 for intial team
     points_track = [calculate_players_total_points(players_df)]
 
-    # get an array of gameweek values (as some don't go 1-38) and sort
+    # Get an array of gameweek values (as some don't go 1-38) and sort
     gameweeks = sorted(player_data.get_all_players_all_gw_stats()['GW'].unique())
     # Remove first week as the points are already in the array
     gameweeks.pop(0)
 
     # For each gameweek, make a transfer if specified, and update points
     for gameweek in gameweeks:
-        # obtain a dataframe of all players for that gameweek
+        # Obtain a dataframe of all players for that gameweek
         if transfers:
             all_players_df = player_data.get_position_players_gw_stats(gameweek, position)[['name', 'total_points',
                                                                                             'position', 'GW',
@@ -46,7 +82,7 @@ def calculate_players_performance_random(player_data: PlayerData, initial_player
 
         players_df = update_players_stats(players_df, all_players_df)
 
-        # find a player who does not meet condition, if there is one remove and add a player from all players who does
+        # Find a player who does not meet condition, if there is one remove and add a player from all players who does
         if transfers:
             condition = create_condition(parameter, operator, value, players_df)
             players_df = transfer_player_random(condition, all_players_df, players_df, gameweek,
@@ -54,10 +90,10 @@ def calculate_players_performance_random(player_data: PlayerData, initial_player
 
         points_track.append(calculate_players_total_points(players_df))
 
-        # error check
+        # Error check
         check_team_size(players_df, initial_players_df)
 
-    # helpful console output for final team display
+    # Helpful console output for final team display
     if display_changes:
         print("--------------------------------- FINAL TEAM ---------------------------------")
         print(players_df)
@@ -70,15 +106,32 @@ def calculate_players_performance_random(player_data: PlayerData, initial_player
 
 def calculate_teams_performance(player_data: PlayerData, initial_players_df, variable="",
                                 display_changes=False, left_over_budget=0):
+    """
+        Calculates the performance of a team over the season, making transfers based on the given variable, adhering to
+        the FPL official rules.
+
+        Args:
+            player_data (PlayerData): An object that holds player data.
+            initial_players_df (pd.DataFrame): A dataframe containing the initial players.
+            variable (str, optional): The variable to consider when making transfers. Defaults to an empty string.
+            display_changes (bool, optional): A flag to indicate if changes should be displayed. Defaults to False.
+            left_over_budget (int or float, optional): The remaining budget for the team. Defaults to 0.
+
+        Returns:
+            np.ndarray: An array representing accumulated points for each gameweek.
+
+        Note:
+            The method raises a warning if there are not exactly 15 players in the initial_players_df.
+        """
     # Check if there are 15 players in the squad
     if initial_players_df.shape[0] != 15:
         print(f"The team has {initial_players_df.shape[0]} players, but the desired number of players is {15}.")
 
-    # define player data object to obtain player data
+    # Define player data object to obtain player data
     players_df = initial_players_df[
         ['name', 'minutes', 'kickoff_time', 'total_points', 'position', 'GW', 'value', "team", variable]].copy()
 
-    # helpful console output for initial team display
+    # Helpful console output for initial team display
     if display_changes:
         print("--------------------------------- INITIAL TEAM ---------------------------------")
         print(players_df)
@@ -97,16 +150,16 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
              'position', 'GW', 'value', "team",
              variable]]
 
-        # update stats for players in gameweek
+        # Update stats for players in gameweek
         players_df = update_players_stats(players_df, all_players_df)
 
-        # transfer player
+        # Transfer player
         players_df, left_over_budget, delta_value, player_transferred_out, \
-        player_transferred_in = transfer_player(all_players_df, players_df, display_changes, gameweek, left_over_budget)
+        player_transferred_in, change_in_actual_points = transfer_player(all_players_df, players_df, display_changes,
+                                                                         gameweek, left_over_budget)
 
         # Organise team and calculate points earnt
-        starting_df, subs_df = organise_team(players_df, "predicted_points", player_transferred_out,
-                                             player_transferred_in, delta_value, left_over_budget, display_changes)
+        starting_df, subs_df = organise_team(players_df, "predicted_points", display_changes)
         gw_total_points = calculate_players_total_points(starting_df)
         points_track.append(gw_total_points)
 
@@ -125,6 +178,16 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
 
 
 def calculate_players_total_points(players_df, display=False):
+    """
+    Calculates the total points for a given team of players.
+
+    Args:
+        players_df (pd.DataFrame): A dataframe containing player information, including 'total_points' column.
+        display (bool, optional): A flag to indicate if the total points should be printed. Defaults to False.
+
+    Returns:
+        int: The sum of total points for all players in the team.
+    """
     total_points = players_df['total_points'].sum()
     if display:
         print(f"Total team points: {total_points}")
@@ -132,6 +195,9 @@ def calculate_players_total_points(players_df, display=False):
 
 
 def create_condition(parameter, operator, value, players_df):
+    """
+    Returns a string condition based on the given parameter, operator, value, and players DataFrame.
+    """
     if parameter != "was_home":
         if value == "highest":
             value = players_df[parameter].max()
@@ -142,6 +208,16 @@ def create_condition(parameter, operator, value, players_df):
 
 
 def update_players_stats(players_df, all_players_df):
+    """
+        Update the stats of the players in players_df using the latest gameweek stats from all_players_df.
+
+        Args:
+            players_df (pd.DataFrame): A DataFrame containing the current stats of the players.
+            all_players_df (pd.DataFrame): A DataFrame containing the latest gameweek stats of all players.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the updated stats of the players.
+        """
     # get a list of the names already in the df
     players_names_list = players_df["name"].values
 
@@ -163,6 +239,15 @@ def update_players_stats(players_df, all_players_df):
 
 
 def accumulate_points(points_track):
+    """
+    Calculate the cumulative points for each gameweek in the given points track.
+
+    Args:
+        points_track (List[int]): A list of points for each gameweek.
+
+    Returns:
+        List[int]: A list of the cumulative points for each gameweek.
+    """
     for i in range(1, len(points_track)):
         points_track[i] = points_track[i - 1] + points_track[i]
     return points_track

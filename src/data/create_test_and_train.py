@@ -1,3 +1,23 @@
+"""
+This script, create_test_and_train.py, is used to preprocess and split the data
+into training, testing, and validation datasets for Fantasy Premier League (FPL)
+player performance prediction models. The data is separated by player positions
+(forwards, midfielders, defenders, and goalkeepers) to create position-specific
+models.
+
+The script performs the following tasks:
+
+Import required libraries (pandas and pathlib).
+Define the path to the data directory.
+Load and concatenate gameweek data for the seasons 2016-17 to 2019-20.
+Preprocess the data and create separate DataFrames for each player position.
+Save the position-specific training data to CSV files.
+Load and preprocess the test data for the 2021-22 season.
+Save the position-specific test data to CSV files.
+Load and preprocess the validation data for the 2020-21 season.
+Save the position-specific validation data to CSV files.
+"""
+
 import pandas as pd
 from pathlib import Path
 

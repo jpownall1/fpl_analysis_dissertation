@@ -1,9 +1,26 @@
+"""
+alter_results.py: A Python script that modifies the contents of a results dictionary that has been pickled to a file.
+
+This script does the following:
+
+Loads the pickled results dictionary from a file.
+Modifies the keys in the dictionary and its nested dictionaries by replacing the "subs" substring with "transfers".
+Saves the modified results dictionary as a new pickle file.
+Usage:
+Simply run the script with Python interpreter. No arguments are required.
+
+Dependencies:
+- pickle
+
+Example:
+$ python alter_results.py
+"""
+
 import pickle
-import variable_analysis
 
 # access results from pickle file, so I don't need to run this file over and over as it takes a very long time.
 # rb means read byte for faster access
-pickle_in = open("results_dict.pickle", "rb")
+pickle_in = open("../visualisation/results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
 # get average points across all seasons for each param
@@ -51,7 +68,7 @@ results_dict = new_results_dict
 # save results as pickle file, so I don't need to run this file over and over as it takes a very long time.
 # wb means with byte for faster access
 print("Saving to pickle file")
-pickle_out = open("results_dict.pickle", "wb")
+pickle_out = open("../visualisation/results_dict.pickle", "wb")
 pickle.dump(results_dict, pickle_out)
 pickle_out.close()
 print("Pickle file saved as 'results_dict.pickle'")

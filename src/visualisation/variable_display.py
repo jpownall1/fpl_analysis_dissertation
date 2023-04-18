@@ -1,13 +1,11 @@
 import pickle
 import matplotlib.pyplot as plt
-import variable_analysis
 
 # access results from pickle file, so I don't need to run this file over and over as it takes a very long time.
 # rb means read byte for faster access
 pickle_in = open("results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
-#print(results_dict)
 
 def display_results(results, which_result):
     ordered_params = [t[1] for t in results_dict[f"{which_result}_ranked_params"]]

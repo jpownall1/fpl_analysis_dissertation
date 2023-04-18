@@ -1,3 +1,20 @@
+"""
+This module, team_data.py, defines a class TeamData to interact with and
+retrieve various types of team-specific data for Fantasy Premier League (FPL) analysis.
+
+The TeamData class includes methods to:
+
+Retrieve data for a specific team and season.
+Get team name for the specified team ID.
+Get team fixtures for a specific season.
+Get a team's fixture for a specific gameweek within a season.
+Determine if a team is playing at home for a specific gameweek.
+Get the opponent's team ID for a specific gameweek.
+Get the opponent's team name for a specific gameweek.
+Determine if a team is the favorite to win a specific gameweek's match.
+"""
+
+
 import pandas as pd
 from season_data import SeasonData
 

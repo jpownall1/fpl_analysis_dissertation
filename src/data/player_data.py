@@ -1,9 +1,21 @@
+"""
+This module, player_data.py, defines a class PlayerData to interact with and
+retrieve various types of player data for Fantasy Premier League (FPL) analysis.
+
+The PlayerData class includes methods to:
+
+Retrieve player data based on season, position, or specified conditions.
+Get player IDs, team IDs, and historical or current season statistics.
+Determine if a player played in a specific gameweek or if a game was played at home.
+Get all player stats from the previous season or total current season stats.
+Retrieve all player stats for a specific gameweek, filtered by position if needed.
+Select random players from the first gameweek, filtered by position.
+Check if a player is present in a specific gameweek.
+"""
+
+
 import pandas as pd
-from IPython.core.display_functions import display
 from pathlib import Path
-
-
-# from line_profiler_pycharm import profile
 
 
 class PlayerData:
