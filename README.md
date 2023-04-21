@@ -9,24 +9,17 @@ Project Organization
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    |
+    ├── data              <- Directory for data.
+    │   ├── 2016-17       <- Data from season 2016-17.
+    │   ├── 2017-18       <- Data from season 2017-18.
+    │   ├── 2018-19       <- Data from season 2018-19.
+    │   ├── 2019-20       <- Data from season 2019-20.
+    │   ├── 2020-21       <- Data from season 2020-21.
+    │   ├── 2021-22       <- Data from season 2021-22.
+    │   ├── test_and_train_data       <- Data used in training, testing and validating.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
+    ├── reports            <- Generated analysis as LaTeX.
     │
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
@@ -35,23 +28,38 @@ Project Organization
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── data           <- Scripts to generate or manipulate data
+    │   │   └── add_to_cleaned_players.py           <- Added team, position and initial cost to clean_players.
+    │   │   └── add_to_merged_gameweeks.py           <- Added team, position and initial cost to clean_players.
+    │   │   └── create_test_and_train.py           <- Creates test data from combining seasons 2016-17 to 2019-20,
+    │   │   |                                         validation data from season 2020-21 and test from season
+    │   │   |                                         2021-22.
+    │   │   └── player_data.py           <- Used for extracting data for players.
+    │   │   └── season_data.py           <- Used for extracting data for the season.
+    │   │   └── team_data.py           <- Used for extracting data for teams.
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── utils       <- Useful scripts used to carry out neccessary algorithms
+    │   │   └── alter_results.py       <- To rename some dict keys and add data to individual variable analysis results.
+    │   │   └── calculate_performance.py       <- Used to carry out algorithms measuring performances of teams.
+    │   │   └── make_transfers.py       <- Used to simulate transfers.
+    │   │   └── organise_team.py       <- Picks a team. Makes a sub if a player doesn't play, picks vice captain, organises
+    |   |   |                             team formation.
+    │   │   └── utils.py       <- Other useful functions.
+    |   |
+    │   ├── utils       <- Useful scripts used to carry out neccessary algorithms
+    │   │   └── parameterised_model_analysis.py       <- Used to analyse values of parameters in linear regression model.
+    │   │   └── variable_display.py       <- Used to analyse performance of individual variables on control teams.
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
+    │   ├── analysis         <- Scripts used to carry out experimental design, linear regression and linear programming.
+    │   │   ├── indepemdent variable analysis.py         <- Experimental design file, randomly generates a small pool of
+    |   |                                                   players and bases transfers on them. Stores the accumulated
+    |   |                                                   points as a pickle file.
+    │   │   └── parameterised_model.py         <- Creates a multiple linear regression model based on the training data
+    |   |                                           file provided. Tests the model on validation and test data. Stores outcome
+    |   |                                         of predicted points for the test data.
+    |   │   └── pick_team_lp.py         <- Creates a team of players by maximising the possible total points earnt from
+    |   |                                  all team players in the previous season, extracting the names of those players
+    |   |                                  and uses that team as a starting squad for the next season.
 
 
 --------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
