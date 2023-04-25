@@ -127,9 +127,12 @@ def calculate_teams_performance(player_data: PlayerData, initial_players_df, var
     if initial_players_df.shape[0] != 15:
         print(f"The team has {initial_players_df.shape[0]} players, but the desired number of players is {15}.")
 
+    # Store initial 'bought for' value
+    initial_players_df['bought_for'] = initial_players_df['value'].copy()
+
     # Define player data object to obtain player data
     players_df = initial_players_df[
-        ['name', 'minutes', 'kickoff_time', 'total_points', 'position', 'GW', 'value', "team", variable]].copy()
+        ['name', 'minutes', 'kickoff_time', 'total_points', 'position', 'GW', 'bought_for', 'value', "team", variable]].copy()
 
     # Helpful console output for initial team display
     if display_changes:
@@ -228,14 +231,27 @@ def update_players_stats(players_df, all_players_df):
     # for players who don't feature in that gameweek, update prev stats by setting points to 0
     players_in_gw_names = players_in_gw_df["name"].values
     players_df.loc[~players_df['name'].isin(players_in_gw_names), 'total_points'] = 0
+    # Also set predicted points to 0 for these players. This results in players who dont play some games being
+    # transferred out
+    players_df.loc[~players_df['name'].isin(players_in_gw_names), 'predicted_points'] = 0
 
     # update players_df with the new total_points from players_in_gw_df
     players_df.set_index('name', inplace=True)
     players_in_gw_df.set_index('name', inplace=True)
+
+    # Save the 'bought_for' values before updating
+    bought_for_values = players_df['bought_for'].copy()
+
+    # Update players_df with players_in_gw_df
     players_df.update(players_in_gw_df)
+
+    # Reassign the 'bought_for' values after updating
+    players_df['bought_for'] = bought_for_values
+
     players_df.reset_index(inplace=True)
 
     return players_df
+
 
 
 def accumulate_points(points_track):

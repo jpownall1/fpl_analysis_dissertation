@@ -17,7 +17,6 @@ from src.analysis.pick_team_lp import *
 pd.set_option('display.max_columns', None)
 
 
-
 def transfer_player_random(condition, all_players_df, players_df, gameweek, display_changes):
     """
     Randomly transfers a player from the `players_df` dataframe that does not meet the given `condition`, and replaces
@@ -135,13 +134,20 @@ def find_highest_positive_delta_predicted_points(players_df, all_players_df, lef
     highest_positive_delta_value = float('-inf')
     transfer_market_player = None
     actual_points_change = 0
+    highest_positive_delta_pp_player_value = 0
+
 
     # Get the list of player names from players_df
     players_df_names = players_df['name'].tolist()
 
     # Iterate through each player in the 15-player DataFrame
     for index, player in players_df.iterrows():
-        player_value = player['value'] + left_over_budget
+        change_in_value = player['value'] - player['bought_for']
+        # This is to accommodate for the 50% charge on increased value of players
+        if change_in_value > 0:
+            player_value = player['bought_for'] + (change_in_value/2) + left_over_budget
+        else:
+            player_value = player['value'] + left_over_budget
         player_gameweek = player['GW']
         player_position = player['position']
 
@@ -158,21 +164,25 @@ def find_highest_positive_delta_predicted_points(players_df, all_players_df, lef
         if delta_predicted_points > highest_positive_delta_value and delta_predicted_points > 3:
             highest_positive_delta_value = delta_predicted_points
             highest_positive_delta_pp_player = players_df.loc[[index]]
+            # Update their value with the 50% transfer charge if profit has been made
+            highest_positive_delta_pp_player_value = player_value
             transfer_market_player = filtered_players.loc[[filtered_players['predicted_points'].idxmax()]]
 
     if highest_positive_delta_pp_player is not None:
         # Update left_over_budget after choosing the player with the highest positive delta
-        left_over_budget += highest_positive_delta_pp_player['value'].values[0] - \
-                            transfer_market_player['value'].values[0]
-        actual_points_change = transfer_market_player['total_points'].values[0] - highest_positive_delta_pp_player['total_points'].values[0]
+        left_over_budget = highest_positive_delta_pp_player_value - transfer_market_player['value'].values[0]
+        actual_points_change = transfer_market_player['total_points'].values[0] - \
+                               highest_positive_delta_pp_player['total_points'].values[0]
+        transfer_market_player['bought_for'] = transfer_market_player['value'].copy()
     else:
         highest_positive_delta_value = 0
 
-    return highest_positive_delta_pp_player, transfer_market_player, left_over_budget, highest_positive_delta_value, actual_points_change
+    return highest_positive_delta_pp_player, transfer_market_player, left_over_budget, highest_positive_delta_value, \
+           actual_points_change
 
 
-
-def filter_for_fpl_conditions(all_players_df, players_df, players_df_names, player_value, player_gameweek, player_position):
+def filter_for_fpl_conditions(all_players_df, players_df, players_df_names, player_value, player_gameweek,
+                              player_position):
     """
     Filters the all_players_df dataframe based on the given conditions and returns the filtered dataframe.
 
@@ -188,9 +198,9 @@ def filter_for_fpl_conditions(all_players_df, players_df, players_df_names, play
     """
     # Filter all_players_df based on the player's value (including left_over_budget), the next gameweek, and position
     filtered_players = all_players_df[(all_players_df['value'] <= player_value) &
-                                  (all_players_df['GW'] == player_gameweek) &
-                                  (all_players_df['position'] == player_position) &
-                                  (~all_players_df['name'].isin(players_df_names))]
+                                      (all_players_df['GW'] == player_gameweek) &
+                                      (all_players_df['position'] == player_position) &
+                                      (~all_players_df['name'].isin(players_df_names))]
 
     # Filter out players from a team with already 3 players selected
     team_counts = players_df['team'].value_counts()
