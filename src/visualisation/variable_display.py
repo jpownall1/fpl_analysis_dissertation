@@ -7,6 +7,20 @@ pickle_in = open("results_dict.pickle", "rb")
 results_dict = pickle.load(pickle_in)
 
 
+def convert_pos_to_word(position):
+    position = position.upper()
+    if position == "GK":
+        return "Goalkeeper"
+    elif position == "DEF":
+        return "Defender"
+    elif position == "MID":
+        return "Midfielder"
+    elif position == "FWD":
+        return "Forward"
+    else:
+        raise ValueError("Invalid position")
+
+
 def display_results(results, which_result):
     ordered_params = [t[1] for t in results_dict[f"{which_result}_ranked_params"]]
     # plot results
@@ -20,12 +34,12 @@ def display_results(results, which_result):
     season = which_result.split("_")[1]
     plt.xlabel("Gameweek")
     plt.ylabel("Average Points")
-    plt.title(f"{position} {season} results")
+    plt.title(f"Experimental Design results for position {convert_pos_to_word(position)} for season {season}")
     plt.legend()
     plt.show()
 
 
-display_results(results_dict, "fwd_avg")
+display_results(results_dict, "fwd_2020-21")
 
 
 def get_ranked_params_position_as_latex_table(position, season):
