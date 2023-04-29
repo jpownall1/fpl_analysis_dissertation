@@ -36,7 +36,7 @@ Project Organization
     │
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
     ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
+    │   ├── play.py    <- Simulation of season 2021-22 using linear programming and MLR to make decisions.
     │   │
     │   ├── data           <- Scripts to generate or manipulate data
     │   │   └── add_to_cleaned_players.py           <- Added team, position and initial cost to clean_players.
