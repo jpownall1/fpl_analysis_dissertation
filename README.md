@@ -1,7 +1,17 @@
 automated_fantasy_football_player
 ==============================
 
-This is a repository to store my dissertation project. This entails using AI techniques to build and alter a fantasy football squad.
+This repository presents an approach to selecting players for an FPL team by using linear
+regression to predict future player performance based on their recent performances, and
+linear programming to optimise team selection given the previous season’s best group of
+players within constraints.
+
+It will analyse the usefulness of the points prediction in making informed decisions about
+transfers and team organisation. It was found that this approach provided a significant
+improvement in points accumulated by the end of the season compared to the average player.
+
+Run python play.py for the outcome of the combination of techniques for season 2021-22.
+
 
 Project Organization
 ------------
@@ -52,11 +62,11 @@ Project Organization
     │   │
     │   ├── analysis         <- Scripts used to carry out experimental design, linear regression and linear programming.
     │   │   ├── indepemdent variable analysis.py         <- Experimental design file, randomly generates a small pool of
-    |   |                                                   players and bases transfers on them. Stores the accumulated
-    |   |                                                   points as a pickle file.
+    |   |   |                                               players and bases transfers on them. Stores the accumulated
+    |   |   |                                               points as a pickle file.
     │   │   └── parameterised_model.py         <- Creates a multiple linear regression model based on the training data
-    |   |                                           file provided. Tests the model on validation and test data. Stores outcome
-    |   |                                         of predicted points for the test data.
+    |   |   |                                       file provided. Tests the model on validation and test data. Stores outcome
+    |   |   |                                     of predicted points for the test data.
     |   │   └── pick_team_lp.py         <- Creates a team of players by maximising the possible total points earnt from
     |   |                                  all team players in the previous season, extracting the names of those players
     |   |                                  and uses that team as a starting squad for the next season.
