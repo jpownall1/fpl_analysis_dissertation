@@ -136,7 +136,6 @@ def find_highest_positive_delta_predicted_points(players_df, all_players_df, lef
     actual_points_change = 0
     highest_positive_delta_pp_player_value = 0
 
-
     # Get the list of player names from players_df
     players_df_names = players_df['name'].tolist()
 

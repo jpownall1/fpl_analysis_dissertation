@@ -2,7 +2,7 @@
 play.py: A script to simulate a fantasy football team's performance throughout a season.
 
 The script uses linear programming to create an initial team and then simulates their performance
-over the season, making transfers and captainsbased on the 'predicted_points' variable and simulating
+over the season, making transfers and captains based on the 'predicted_points' variable and simulating
 the automatic changes an FPL team makes throughout the season.
 
 Usage:
@@ -28,4 +28,4 @@ if __name__ == '__main__':
     selected_players_df = get_selected_players_gw_one_data(player_data, selected_player_names)
 
     # Simulate season
-    print(calculate_teams_performance(player_data, selected_players_df, "predicted_points", False, left_over_budget))
+    print(calculate_teams_performance(player_data, selected_players_df, "predicted_points", True, left_over_budget))
